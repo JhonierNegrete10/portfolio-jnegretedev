@@ -1,0 +1,148 @@
+/*
+ * Design tokens extracted from reference/Portafolio 5a - Sitio.dc.html
+ * Do not hardcode these values in components — reference the custom
+ * properties below so the visual system stays in one place.
+ */
+:root {
+  /* Color tokens */
+  --color-bg: #141416;
+  --color-accent: #ff5c35;
+  --color-border: #2e2e30;
+  --color-border-strong: #3e3e40;
+  --color-text: #ececea;
+  --color-muted: #9a9a96;
+  --color-muted-dim: #6a6a66;
+  --color-muted-soft: #b8b8b4;
+
+  /* Typography tokens */
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-sans: 'Archivo', sans-serif;
+
+  /* Layout */
+  --topbar-breakpoint: 1060px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-bg);
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  opacity: 0.7;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Visible focus ring for keyboard navigation (accessibility) */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Skip link for keyboard users */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  padding: 12px 20px;
+  z-index: 100;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+/* ===== Keyframes (ported 1:1 from reference) ===== */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes gridDrift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 56px 56px;
+  }
+}
+
+@keyframes meridian {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(180deg);
+  }
+}
+
+@keyframes orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* Respect prefers-reduced-motion globally: neutralize all animations/transitions */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

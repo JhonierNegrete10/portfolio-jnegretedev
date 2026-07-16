@@ -1,0 +1,61 @@
+---
+import '../styles/fonts.css';
+import '../styles/global.css';
+import Head from '../components/Head.astro';
+import Topbar from '../components/Topbar.astro';
+import Footer from '../components/Footer.astro';
+import type { Lang, PageKey } from '../i18n/routes';
+import { getUi } from '../i18n/ui';
+
+export interface Props {
+  lang: Lang;
+  page: PageKey;
+  title: string;
+  description: string;
+  /** Current page path, trailing slash included (e.g. "/proyectos/"). */
+  path: string;
+  /** Equivalent path in the other language, when a true equivalent exists. */
+  alternatePath?: string;
+  /** Set true on a blog post detail page (not the index). */
+  isBlogPost?: boolean;
+  /** Slug of this post's translation, if one exists. */
+  translatedSlug?: string;
+  /** Set true on the 404 page. */
+  noindex?: boolean;
+}
+
+const { lang, page, title, description, path, alternatePath, isBlogPost, translatedSlug, noindex } = Astro.props;
+const t = getUi(lang);
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <Head lang={lang} title={title} description={description} path={path} alternatePath={alternatePath} noindex={noindex} />
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">{t.skipToContent}</a>
+    <div class="page-shell">
+      <Topbar lang={lang} page={page} isBlogPost={isBlogPost} translatedSlug={translatedSlug} />
+      <main id="main-content" class="page-main">
+        <slot />
+      </main>
+      <Footer lang={lang} />
+    </div>
+  </body>
+</html>
+
+<style>
+  .page-shell {
+    min-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-main {
+    flex: 1;
+  }
+</style>

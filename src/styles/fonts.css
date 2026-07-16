@@ -1,0 +1,12 @@
+/* Self-hosted fonts via @fontsource — no external font requests. */
+
+/* IBM Plex Mono — UI, nav, labels, meta text */
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+
+/* Archivo — headings, titles, display text */
+@import '@fontsource/archivo/400.css';
+@import '@fontsource/archivo/500.css';
+@import '@fontsource/archivo/600.css';
+@import '@fontsource/archivo/700.css';

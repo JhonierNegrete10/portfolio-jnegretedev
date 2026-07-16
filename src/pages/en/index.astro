@@ -1,0 +1,80 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getUi } from '../../i18n/ui';
+import { profile } from '../../data/profile';
+import { localizedPath } from '../../i18n/routes';
+
+const lang = 'en' as const;
+const t = getUi(lang);
+const path = localizedPath('home', lang);
+const alternatePath = localizedPath('home', 'es');
+---
+
+<Base
+  lang={lang}
+  page="home"
+  title={t.meta.home.title}
+  description={t.meta.home.description}
+  path={path}
+  alternatePath={alternatePath}
+>
+  <section class="hero">
+    <h1>Jhonier<br />Negrete<span class="accent">.</span></h1>
+    <p class="hero__tagline">{profile.tagline[lang]}</p>
+    <div class="hero__actions">
+      <a href={localizedPath('contact', lang)} class="btn btn--primary">{t.home.heroCta} ↗</a>
+      <a href="/cv.pdf" class="btn btn--outline">{t.home.cvButton} ↓</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    padding: 70px 24px 56px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .hero h1 {
+    font-family: var(--font-sans);
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 0.96;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .accent {
+    color: var(--color-accent);
+  }
+
+  .hero__tagline {
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 32px 0 0;
+    max-width: 440px;
+    color: var(--color-muted-soft);
+  }
+
+  .hero__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 36px;
+    font-size: 13px;
+  }
+
+  .btn {
+    padding: 13px 22px;
+    font-weight: 600;
+  }
+
+  .btn--primary {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  .btn--outline {
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text);
+  }
+</style>

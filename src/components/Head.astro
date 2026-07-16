@@ -1,0 +1,72 @@
+---
+import type { Lang } from '../i18n/routes';
+import { profile } from '../data/profile';
+
+export interface Props {
+  lang: Lang;
+  /** Page-specific title. The site name is appended automatically. */
+  title: string;
+  description: string;
+  /** Current page path, trailing slash included (e.g. "/proyectos/"). */
+  path: string;
+  /**
+   * Equivalent path in the other language, when a true content equivalent
+   * exists. Omit for e.g. a blog post with no translation — hreflang for
+   * that language is then skipped rather than pointing at different content.
+   */
+  alternatePath?: string;
+  /** Set true on the 404 page. */
+  noindex?: boolean;
+}
+
+const { lang, title, description, path, alternatePath, noindex = false } = Astro.props;
+
+const siteUrl = Astro.site ?? new URL('https://jnegrete.dev');
+const canonical = new URL(path, siteUrl).toString();
+const ogImage = new URL('/og.png', siteUrl).toString();
+
+const esPath = lang === 'es' ? path : alternatePath;
+const enPath = lang === 'en' ? path : alternatePath;
+const xDefaultPath = esPath ?? path;
+
+const ogLocale = lang === 'es' ? 'es_CO' : 'en_US';
+const ogLocaleAlternate = lang === 'es' ? 'en_US' : 'es_CO';
+
+const fullTitle = `${title} — ${profile.name}`;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<link rel="canonical" href={canonical} />
+{esPath && <link rel="alternate" hreflang="es" href={new URL(esPath, siteUrl).toString()} />}
+{enPath && <link rel="alternate" hreflang="en" href={new URL(enPath, siteUrl).toString()} />}
+<link rel="alternate" hreflang="x-default" href={new URL(xDefaultPath, siteUrl).toString()} />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={profile.name} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:locale" content={ogLocale} />
+<meta property="og:locale:alternate" content={ogLocaleAlternate} />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+
+<!-- Icons -->
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+<meta name="generator" content={Astro.generator} />

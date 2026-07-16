@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #141416; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { opacity: 0.7; }
+  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+  @keyframes gridDrift { from{background-position:0 0} to{background-position:56px 56px} }
+  @keyframes meridian { from{transform:rotateY(0deg)} to{transform:rotateY(180deg)} }
+  @keyframes orbit { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes spinSlow { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
+</style>
+</helmet>
+<div style="min-height:100vh; background:#141416; color:#ececea; font-family:'IBM Plex Mono',monospace; display:flex; flex-direction:column;">
+  <!-- top bar -->
+  <sc-if value="{{ notMob }}" hint-placeholder-val="{{ true }}">
+  <div style="display:grid; grid-template-columns:170px minmax(500px,1fr) 150px 220px; border-bottom:1px solid #2e2e30; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; position:sticky; top:0; background:#141416; z-index:10;">
+    <a href="#" onClick="{{ goHome }}" style="padding:16px 20px; border-right:1px solid #2e2e30; font-weight:600;">JNEGRETE.DEV</a>
+    <div style="padding:16px 20px; border-right:1px solid #2e2e30; display:flex; gap:18px; white-space:nowrap;">
+      <a href="#" onClick="{{ goHome }}" style="color:{{ navHomeC }};">{{ tNavHome }}</a>
+      <a href="#" onClick="{{ goWork }}" style="color:{{ navWorkC }};">{{ tNavWork }}</a>
+      <a href="#" onClick="{{ goServices }}" style="color:{{ navServicesC }};">{{ tNavServices }}</a>
+      <a href="#" onClick="{{ goAbout }}" style="color:{{ navAboutC }};">{{ tNavAbout }}</a>
+      <a href="#" onClick="{{ goBlog }}" style="color:{{ navBlogC }};">BLOG</a>
+      <a href="#" onClick="{{ goContact }}" style="color:{{ navContactC }};">{{ tNavContact }}</a>
+    </div>
+    <div style="padding:16px 20px; border-right:1px solid #2e2e30; white-space:nowrap;"><span style="color:#ff5c35; display:inline-block; animation:pulse 1.6s ease-in-out infinite;">●</span> {{ tAvail }}</div>
+    <div style="padding:16px 20px; display:flex; justify-content:space-between; align-items:center; white-space:nowrap; gap:12px;"><span style="color:#9a9a96;">MED / REMOTE</span><button onClick="{{ toggleLang }}" style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; background:transparent; color:#ececea; border:1px solid #3e3e40; padding:5px 12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:border-color 0.15s, color 0.15s;" style-hover="border-color:#ff5c35; color:#ff5c35;"><span style="color:#ff5c35;">⇄</span>{{ langLabel }}</button></div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ mob }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2e2e30; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; position:sticky; top:0; background:#141416; z-index:10;">
+      <a href="#" onClick="{{ goHome }}" style="padding:16px; font-weight:600; color:#ececea;">JNEGRETE.DEV</a>
+      <div style="display:flex; align-items:center; gap:12px; padding:0 16px;">
+        <span style="color:#ff5c35; animation:pulse 1.6s ease-in-out infinite;">●</span>
+        <button onClick="{{ toggleLang }}" style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; background:transparent; color:#ececea; border:1px solid #3e3e40; padding:5px 12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:border-color 0.15s, color 0.15s;" style-hover="border-color:#ff5c35; color:#ff5c35;"><span style="color:#ff5c35;">⇄</span>{{ langLabel }}</button>
+        <button onClick="{{ toggleMenu }}" style="font-family:'IBM Plex Mono',monospace; font-size:14px; background:none; color:#ececea; border:1px solid #3e3e40; padding:4px 12px; cursor:pointer;">{{ menuIcon }}</button>
+      </div>
+    </div>
+    <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed; top:53px; left:0; right:0; bottom:0; background:#141416; z-index:9; display:flex; flex-direction:column; font-family:'Archivo',sans-serif; text-transform:uppercase;">
+        <a href="#" onClick="{{ goHome }}" style="padding:20px; border-bottom:1px solid #2e2e30; font-size:26px; font-weight:700; color:{{ navHomeC }};">{{ tNavHome }}</a>
+        <a href="#" onClick="{{ goWork }}" style="padding:20px; border-bottom:1px solid #2e2e30; font-size:26px; font-weight:700; color:{{ navWorkC }};">{{ tNavWork }}</a>
+        <a href="#" onClick="{{ goServices }}" style="padding:20px; border-bottom:1px solid #2e2e30; font-size:26px; font-weight:700; color:{{ navServicesC }};">{{ tNavServices }}</a>
+        <a href="#" onClick="{{ goAbout }}" style="padding:20px; border-bottom:1px solid #2e2e30; font-size:26px; font-weight:700; color:{{ navAboutC }};">{{ tNavAbout }}</a>
+        <a href="#" onClick="{{ goBlog }}" style="padding:20px; border-bottom:1px solid #2e2e30; font-size:26px; font-weight:700; color:{{ navBlogC }};">BLOG</a>
+        <a href="#" onClick="{{ goContact }}" style="padding:20px; border-bottom:1px solid #2e2e30; font-size:26px; font-weight:700; color:{{ navContactC }};">{{ tNavContact }}</a>
+        <div style="padding:20px; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; color:#6a6a66;"><span style="color:#ff5c35;">●</span> {{ tAvail }} — MED / REMOTE</div>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <div style="flex:1;">
+  <!-- ================= HOME ================= -->
+  <sc-if value="{{ pgHome }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="Home">
+      <div style="display:grid; grid-template-columns:{{ heroCols }}; border-bottom:1px solid #2e2e30;">
+        <div style="padding:70px 24px 56px; position:relative; overflow:hidden; background-image:radial-gradient(rgba(255,92,53,0.14) 1px, transparent 1.5px); background-size:28px 28px; animation:gridDrift 14s linear infinite;">
+          <h2 style="font-family:'Archivo',sans-serif; font-size:{{ hH2 }}; font-weight:700; letter-spacing:-0.035em; line-height:0.96; margin:0; text-transform:uppercase;">Jhonier<br>Negrete<span style="color:#ff5c35;">.</span></h2>
+          <p style="font-size:14px; line-height:1.7; margin:32px 0 0; max-width:440px; color:#b8b8b4;">{{ hSub }}</p>
+          <div style="display:flex; gap:10px; margin-top:36px; font-size:13px;">
+            <a href="#" onClick="{{ goContact }}" style="background:#ff5c35; color:#141416; padding:13px 22px; font-weight:600;">{{ hCta }} ↗</a>
+            <a href="#" onClick="{{ goAbout }}" style="border:1px solid #3e3e40; padding:13px 22px; color:#ececea;">CV.PDF ↓</a>
+          </div>
+        </div>
+        <div style="border-left:{{ cellBL }}; border-top:{{ cellBT }}; position:relative; display:flex; align-items:center; justify-content:center; min-height:460px; overflow:hidden;">
+          <div style="position:absolute; top:16px; left:20px; font-size:10px; letter-spacing:0.14em; color:#5c5c58; text-transform:uppercase;">SAT — LINK ACTIVE</div>
+          <div style="position:absolute; bottom:16px; right:20px; font-size:10px; letter-spacing:0.14em; color:#5c5c58; text-align:right; line-height:1.8;">LAT 6.2442° N<br>LON 75.5812° W</div>
+          <div style="position:relative; width:300px; height:300px; perspective:900px;">
+            <div style="position:absolute; inset:0; border-radius:50%; border:1px solid rgba(255,92,53,0.45); box-shadow:0 0 60px rgba(255,92,53,0.18), inset 0 0 40px rgba(255,92,53,0.08);"></div>
+            <canvas ref="{{ globeRef }}" width="600" height="600" style="position:absolute; inset:0; width:300px; height:300px;"></canvas>
+            <div style="position:absolute; inset:-34px; border-radius:50%; border:1px dashed rgba(236,236,234,0.18); animation:orbit 12s linear infinite;">
+              <div style="position:absolute; top:-4px; left:50%; width:8px; height:8px; border-radius:50%; background:#ececea; box-shadow:0 0 12px rgba(236,236,234,0.9);"></div>
+            </div>
+            <div style="position:absolute; inset:-70px; border-radius:50%; border:1px dashed rgba(255,92,53,0.14); animation:spinSlow 26s linear infinite;">
+              <div style="position:absolute; bottom:6px; left:18%; width:6px; height:6px; border-radius:50%; background:#ff5c35; box-shadow:0 0 10px rgba(255,92,53,0.9);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="border-bottom:1px solid #2e2e30; overflow:hidden; padding:13px 0; white-space:nowrap;">
+        <div style="display:inline-flex; gap:40px; animation:marquee 18s linear infinite; font-size:12px; text-transform:uppercase; letter-spacing:0.14em; color:#ff5c35;">
+          <span>LLMs</span><span>·</span><span>RAG</span><span>·</span><span>Agents</span><span>·</span><span>Evals</span><span>·</span><span>MLOps</span><span>·</span><span>PyTorch</span><span>·</span><span>vLLM</span><span>·</span><span>AWS</span><span>·</span>
+          <span>LLMs</span><span>·</span><span>RAG</span><span>·</span><span>Agents</span><span>·</span><span>Evals</span><span>·</span><span>MLOps</span><span>·</span><span>PyTorch</span><span>·</span><span>vLLM</span><span>·</span><span>AWS</span><span>·</span>
+        </div>
+      </div>
+      <div style="font-size:13px;">
+        <div style="display:grid; grid-template-columns:{{ homeTableCols }}; border-bottom:1px solid #2e2e30; padding:12px 24px; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#6a6a66;">
+          <div>No.</div><div>{{ tColProject }}</div><div style="display:{{ stackDisp }};">Stack</div><div style="text-align:right;">{{ tColYear }}</div>
+        </div>
+        <sc-for list="{{ projects }}" as="p" hint-placeholder-count="4">
+          <a href="#" onClick="{{ goWork }}" style="display:grid; grid-template-columns:{{ homeTableCols }}; border-bottom:1px solid #2e2e30; padding:20px 24px; align-items:baseline; color:#ececea;" style-hover="background:#ff5c35; color:#141416; opacity:1;">
+            <div>{{ p.no }}</div><div style="font-family:'Archivo',sans-serif; font-size:19px; font-weight:600;">{{ p.title }}</div><div style="display:{{ stackDisp }}; opacity:0.6;">{{ p.stack }}</div><div style="text-align:right;">{{ p.year }}</div>
+          </a>
+        </sc-for>
+      </div>
+      <div style="display:grid; grid-template-columns:{{ twoCols }};">
+        <a href="#" onClick="{{ goServices }}" style="display:block; padding:32px 24px; border-right:1px solid #2e2e30; color:#ececea;"><div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#ff5c35; margin-bottom:10px;">{{ tSrv1Label }}</div><div style="font-family:'Archivo',sans-serif; font-size:20px; font-weight:600;">{{ tSrv1 }} →</div></a>
+        <a href="#" onClick="{{ goServices }}" style="display:block; padding:32px 24px; color:#ececea;"><div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#ff5c35; margin-bottom:10px;">{{ tSrv2Label }}</div><div style="font-family:'Archivo',sans-serif; font-size:20px; font-weight:600;">{{ tSrv2 }} →</div></a>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ================= PROYECTOS ================= -->
+  <sc-if value="{{ pgWork }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Proyectos">
+      <div style="padding:56px 24px 40px; border-bottom:1px solid #2e2e30; display:flex; justify-content:space-between; align-items:flex-end;">
+        <h2 style="font-family:'Archivo',sans-serif; font-size:{{ h2Md }}; font-weight:700; letter-spacing:-0.03em; margin:0; text-transform:uppercase;">{{ wTitle }}<span style="color:#ff5c35;">.</span></h2>
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.14em; color:#6a6a66;">{{ wCount }}</div>
+      </div>
+      <sc-for list="{{ projects }}" as="p" hint-placeholder-count="4">
+        <div style="display:grid; grid-template-columns:{{ workCols }}; border-bottom:1px solid #2e2e30;">
+          <div style="padding:36px 24px; border-right:{{ cellBR }}; display:flex; flex-direction:{{ noColDir }}; justify-content:space-between; gap:24px;">
+            <div style="font-size:28px; color:#ff5c35;">{{ p.no }}</div>
+            <div style="font-size:11px; color:#6a6a66;">{{ p.year }}</div>
+          </div>
+          <div style="padding:36px 24px; border-right:{{ cellBR }};">
+            <h3 style="font-family:'Archivo',sans-serif; font-size:28px; font-weight:600; margin:0 0 14px;">{{ p.title }}</h3>
+            <p style="font-size:13px; line-height:1.8; color:#b8b8b4; margin:0 0 20px; max-width:480px;">{{ p.desc }}</p>
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#6a6a66;">{{ p.stack }}</div>
+          </div>
+          <div style="padding:36px 24px; display:grid; grid-template-rows:repeat(3, 1fr); gap:0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #2e2e30;"><span style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#6a6a66;">{{ p.m1l }}</span><span style="font-family:'Archivo',sans-serif; font-size:22px; font-weight:600; color:#ff5c35;">{{ p.m1 }}</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #2e2e30;"><span style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#6a6a66;">{{ p.m2l }}</span><span style="font-family:'Archivo',sans-serif; font-size:22px; font-weight:600;">{{ p.m2 }}</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#6a6a66;">{{ p.m3l }}</span><span style="font-family:'Archivo',sans-serif; font-size:22px; font-weight:600;">{{ p.m3 }}</span></div>
+          </div>
+        </div>
+      </sc-for>
+      <div style="padding:32px 24px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-size:12px; color:#6a6a66; text-transform:uppercase; letter-spacing:0.1em;">{{ wMore }}</div>
+        <a href="#" onClick="{{ goContact }}" style="background:#ff5c35; color:#141416; padding:13px 22px; font-weight:600; font-size:13px;">{{ hCta }} ↗</a>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ================= SERVICIOS ================= -->
+  <sc-if value="{{ pgServices }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Servicios">
+      <div style="padding:56px 24px 40px; border-bottom:1px solid #2e2e30;">
+        <h2 style="font-family:'Archivo',sans-serif; font-size:{{ h2Md }}; font-weight:700; letter-spacing:-0.03em; margin:0; text-transform:uppercase;">{{ sTitle }}<span style="color:#ff5c35;">.</span></h2>
+      </div>
+      <div style="display:grid; grid-template-columns:{{ twoCols }};">
+        <div style="border-right:{{ cellBR }};">
+          <div style="padding:32px 24px; border-bottom:1px solid #2e2e30;">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#ff5c35; margin-bottom:10px;">{{ tSrv1Label }}</div>
+            <h3 style="font-family:'Archivo',sans-serif; font-size:28px; font-weight:600; margin:0 0 12px;">{{ tSrv1 }}</h3>
+            <p style="font-size:13px; line-height:1.8; color:#b8b8b4; margin:0; max-width:460px;">{{ sConsultDesc }}</p>
+          </div>
+          <sc-for list="{{ steps }}" as="st" hint-placeholder-count="3">
+            <div style="display:grid; grid-template-columns:70px 1fr; padding:24px; border-bottom:1px solid #2e2e30; gap:8px;">
+              <div style="color:#ff5c35; font-size:14px;">{{ st.no }}</div>
+              <div>
+                <div style="font-family:'Archivo',sans-serif; font-size:18px; font-weight:600; margin-bottom:6px;">{{ st.title }}</div>
+                <div style="font-size:12px; line-height:1.7; color:#9a9a96;">{{ st.desc }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div>
+          <div style="padding:32px 24px; border-bottom:1px solid #2e2e30;">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#ff5c35; margin-bottom:10px;">{{ tSrv2Label }}</div>
+            <h3 style="font-family:'Archivo',sans-serif; font-size:28px; font-weight:600; margin:0 0 12px;">{{ tSrv2 }}</h3>
+            <p style="font-size:13px; line-height:1.8; color:#b8b8b4; margin:0; max-width:460px;">{{ sProdDesc }}</p>
+          </div>
+          <sc-for list="{{ products }}" as="pr" hint-placeholder-count="2">
+            <div style="padding:28px 24px; border-bottom:1px solid #2e2e30;">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+                <div style="font-family:'Archivo',sans-serif; font-size:20px; font-weight:600;">{{ pr.title }}</div>
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#ff5c35;">{{ pr.tag }}</div>
+              </div>
+              <div style="font-size:12px; line-height:1.7; color:#9a9a96; max-width:440px;">{{ pr.desc }}</div>
+            </div>
+          </sc-for>
+          <div style="padding:28px 24px;">
+            <a href="#" onClick="{{ goContact }}" style="display:inline-block; background:#ff5c35; color:#141416; padding:13px 22px; font-weight:600; font-size:13px;">{{ sCta }} ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ================= SOBRE MÍ ================= -->
+  <sc-if value="{{ pgAbout }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Sobre mí">
+      <div style="display:grid; grid-template-columns:{{ aboutCols }}; border-bottom:1px solid #2e2e30;">
+        <div style="border-right:{{ cellBR }};">
+          <div style="height:420px; border-bottom:1px solid #2e2e30; background:repeating-linear-gradient(45deg, #1c1c1e 0 14px, #191919 14px 28px); display:flex; align-items:center; justify-content:center; color:#6a6a66; font-size:11px; text-transform:uppercase; letter-spacing:0.14em;">[ retrato — foto aquí ]</div>
+          <div style="padding:20px 24px; border-bottom:1px solid #2e2e30; display:flex; justify-content:space-between; font-size:12px;"><span style="color:#6a6a66;">BASE</span><span>Medellín · Remote</span></div>
+          <div style="padding:20px 24px; border-bottom:1px solid #2e2e30; display:flex; justify-content:space-between; font-size:12px;"><span style="color:#6a6a66;">{{ aLangLabel }}</span><span>ES / EN</span></div>
+          <div style="padding:20px 24px; display:flex; justify-content:space-between; font-size:12px;"><span style="color:#6a6a66;">STATUS</span><span style="color:#ff5c35;">{{ tAvail }}</span></div>
+        </div>
+        <div style="padding:56px 24px;">
+          <h2 style="font-family:'Archivo',sans-serif; font-size:{{ h2Md }}; font-weight:700; letter-spacing:-0.03em; margin:0 0 28px; text-transform:uppercase;">{{ aTitle }}<span style="color:#ff5c35;">.</span></h2>
+          <p style="font-size:14px; line-height:1.9; color:#b8b8b4; margin:0 0 18px; max-width:560px;">{{ aBio1 }}</p>
+          <p style="font-size:14px; line-height:1.9; color:#b8b8b4; margin:0; max-width:560px;">{{ aBio2 }}</p>
+        </div>
+      </div>
+      <div style="padding:12px 24px; border-bottom:1px solid #2e2e30; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#6a6a66;">{{ aTimelineLabel }}</div>
+      <sc-for list="{{ timeline }}" as="tl" hint-placeholder-count="3">
+        <div style="display:grid; grid-template-columns:{{ tlCols }}; border-bottom:1px solid #2e2e30; padding:26px 24px; gap:16px; align-items:baseline;">
+          <div style="color:#ff5c35; font-size:13px;">{{ tl.period }}</div>
+          <div style="font-family:'Archivo',sans-serif; font-size:20px; font-weight:600;">{{ tl.role }}</div>
+          <div style="font-size:12px; line-height:1.7; color:#9a9a96;">{{ tl.desc }}</div>
+        </div>
+      </sc-for>
+      <div style="padding:12px 24px; border-bottom:1px solid #2e2e30; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#6a6a66;">STACK</div>
+      <div style="display:flex; flex-wrap:wrap; gap:0; border-bottom:1px solid #2e2e30;">
+        <div style="padding:16px 22px; border-right:1px solid #2e2e30; font-size:13px;">Python</div>
+        <div style="padding:16px 22px; border-right:1px solid #2e2e30; font-size:13px;">TypeScript</div>
+        <div style="padding:16px 22px; border-right:1px solid #2e2e30; font-size:13px;">PyTorch</div>
+        <div style="padding:16px 22px; border-right:1px solid #2e2e30; font-size:13px;">LangChain</div>
+        <div style="padding:16px 22px; border-right:1px solid #2e2e30; font-size:13px;">vLLM</div>
+        <div style="padding:16px 22px; border-right:1px solid #2e2e30; font-size:13px;">pgvector</div>
+        <div style="padding:16px 22px; border-right:1px solid #2e2e30; font-size:13px;">Ragas</div>
+        <div style="padding:16px 22px; border-right:1px solid #2e2e30; font-size:13px;">AWS</div>
+        <div style="padding:16px 22px; border-right:1px solid #2e2e30; font-size:13px;">Docker</div>
+        <div style="padding:16px 22px; font-size:13px;">CI/CD</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ================= BLOG ================= -->
+  <sc-if value="{{ pgBlog }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Blog">
+      <div style="padding:56px 24px 40px; border-bottom:1px solid #2e2e30; display:flex; justify-content:space-between; align-items:flex-end;">
+        <h2 style="font-family:'Archivo',sans-serif; font-size:{{ h2Lg }}; font-weight:700; letter-spacing:-0.03em; margin:0; text-transform:uppercase; line-height:1;">Blog<span style="color:#ff5c35;">.</span></h2>
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.14em; color:#6a6a66;">{{ bCount }}</div>
+      </div>
+      <div style="display:grid; grid-template-columns:{{ blogCols }}; border-bottom:1px solid #2e2e30; padding:12px 24px; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#6a6a66;">
+        <div style="display:{{ stackDisp }};">No.</div><div>{{ bColDate }}</div><div>{{ bColTitle }}</div><div style="display:{{ stackDisp }};">Tags</div><div style="text-align:right;">{{ bColRead }}</div>
+      </div>
+      <sc-for list="{{ posts }}" as="b" hint-placeholder-count="4">
+        <a href="#" style="display:grid; grid-template-columns:{{ blogCols }}; border-bottom:1px solid #2e2e30; padding:22px 24px; align-items:baseline; color:#ececea; font-size:13px;" style-hover="background:#ff5c35; color:#141416;">
+          <div style="display:{{ stackDisp }};">{{ b.no }}</div>
+          <div style="opacity:0.6;">{{ b.date }}</div>
+          <div>
+            <div style="font-family:'Archivo',sans-serif; font-size:20px; font-weight:600;">{{ b.title }}</div>
+            <div style="opacity:0.6; margin-top:6px; max-width:480px; line-height:1.6;">{{ b.excerpt }}</div>
+          </div>
+          <div style="display:{{ stackDisp }}; opacity:0.6;">{{ b.tags }}</div>
+          <div style="text-align:right;">{{ b.read }}</div>
+        </a>
+      </sc-for>
+      <div style="padding:32px 24px; display:flex; justify-content:space-between; align-items:center; font-size:12px; text-transform:uppercase; letter-spacing:0.1em;">
+        <div style="color:#6a6a66;">{{ bNote }}</div>
+        <a href="#" style="border:1px solid #3e3e40; padding:12px 20px; color:#ececea;" style-hover="background:#ff5c35; color:#141416; border-color:#ff5c35;">RSS ↗</a>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ================= CONTACTO ================= -->
+  <sc-if value="{{ pgContact }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Contacto" style="display:flex; flex-direction:column; min-height:calc(100vh - 150px);">
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:center; padding:64px 24px; border-bottom:1px solid #2e2e30; position:relative; overflow:hidden; background-image:radial-gradient(rgba(255,92,53,0.14) 1px, transparent 1.5px); background-size:28px 28px; animation:gridDrift 14s linear infinite;">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.14em; color:#ff5c35; margin-bottom:18px;">{{ cKicker }}</div>
+        <h2 style="font-family:'Archivo',sans-serif; font-size:{{ h2Lg }}; font-weight:700; letter-spacing:-0.03em; margin:0 0 24px; text-transform:uppercase; line-height:1;">{{ cTitle }}<span style="color:#ff5c35;">.</span></h2>
+        <a href="/cdn-cgi/l/email-protection#b4dcdbd8d5f4dedad1d3c6d1c0d19ad0d1c2" style="align-self:flex-start; word-break:break-all; font-family:'Archivo',sans-serif; font-size:{{ cEmailFs }}; font-weight:600; color:#ececea; border-bottom:2px solid #ff5c35; padding-bottom:4px;"><span class="__cf_email__" data-cfemail="6f0700030e2f05010a081d0a1b0a410b0a19">[email&#160;protected]</span></a>
+        <p style="font-size:13px; color:#9a9a96; margin:28px 0 0; max-width:440px; line-height:1.8;">{{ cNote }}</p>
+      </div>
+      <div style="display:grid; grid-template-columns:{{ threeCols }};">
+        <a href="#" style="display:block; padding:32px 24px; border-right:1px solid #2e2e30; color:#ececea;"><div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#6a6a66; margin-bottom:10px;">01</div><div style="font-family:'Archivo',sans-serif; font-size:20px; font-weight:600;">LinkedIn ↗</div></a>
+        <a href="#" style="display:block; padding:32px 24px; border-right:1px solid #2e2e30; color:#ececea;"><div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#6a6a66; margin-bottom:10px;">02</div><div style="font-family:'Archivo',sans-serif; font-size:20px; font-weight:600;">GitHub ↗</div></a>
+        <a href="#" style="display:block; padding:32px 24px; color:#ececea;"><div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#6a6a66; margin-bottom:10px;">03</div><div style="font-family:'Archivo',sans-serif; font-size:20px; font-weight:600;">CV.PDF ↓</div></a>
+      </div>
+    </div>
+  </sc-if>
+  </div>
+
+  <!-- footer -->
+  <div style="padding:16px 24px; border-top:1px solid #2e2e30; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#9a9a96;">
+    <div><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="733b3c3f3233393d3634213627365d373625">[email&#160;protected]</a></div>
+    <div style="display:flex; gap:20px;"><a href="#">LINKEDIN</a><a href="#">GITHUB</a><a href="#" onClick="{{ goContact }}">{{ tNavContact }}</a></div>
+  </div>
+</div>
+
+</x-dc>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="text/x-dc" data-dc-script data-props="{&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;es&quot;,&quot;en&quot;],&quot;default&quot;:&quot;es&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Contenido&quot;},&quot;available&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Contenido&quot;}}">
+class Component extends DCLogic {
+  state = { lang: null, page: 'home' };
+  globeRef = React.createRef();
+  componentDidMount() {
+    // coarse continent polygons (lon,lat) — stylized silhouettes
+    const polys = [
+      [[-165,65],[-155,71],[-130,70],[-110,73],[-85,70],[-75,62],[-55,52],[-65,45],[-75,40],[-76,35],[-81,30],[-81,25],[-90,29],[-97,26],[-97,20],[-105,20],[-110,23],[-115,29],[-124,40],[-125,48],[-135,58],[-155,58]],
+      [[-97,20],[-90,15],[-83,9],[-79,8],[-83,11],[-88,13],[-92,15],[-97,17]],
+      [[-79,9],[-71,12],[-60,8],[-50,0],[-35,-8],[-39,-15],[-48,-25],[-53,-34],[-58,-39],[-65,-41],[-65,-47],[-68,-52],[-71,-54],[-73,-46],[-71,-37],[-71,-30],[-70,-18],[-75,-15],[-81,-6],[-80,0],[-77,7]],
+      [[-17,15],[-16,22],[-10,30],[-5,36],[10,37],[20,32],[32,31],[34,28],[38,18],[43,11],[51,12],[45,0],[40,-10],[35,-20],[33,-29],[25,-34],[18,-33],[12,-18],[9,-1],[9,5],[-8,4],[-13,9]],
+      [[-10,36],[-10,43],[0,50],[5,58],[10,63],[15,68],[25,71],[40,67],[60,69],[75,72],[100,77],[140,72],[160,70],[178,66],[178,64],[162,60],[160,53],[142,54],[140,43],[130,42],[122,39],[122,37],[121,31],[115,22],[108,18],[105,10],[103,1],[100,7],[98,12],[94,17],[90,22],[87,21],[80,15],[77,8],[73,20],[67,24],[58,25],[57,27],[50,29],[48,30],[52,25],[58,22],[58,17],[52,16],[45,12],[43,15],[38,20],[34,28],[32,31],[27,36],[26,40],[20,40],[15,42],[12,44],[3,43],[-2,36]],
+      [[114,-22],[122,-17],[130,-12],[136,-12],[142,-11],[146,-19],[153,-27],[150,-37],[140,-38],[131,-32],[124,-33],[115,-34],[113,-26]],
+      [[-58,76],[-30,83],[-20,70],[-42,60],[-52,65],[-55,70]]
+    ];
+    const inPoly = (lon, lat, poly) => {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const [xi, yi] = poly[i], [xj, yj] = poly[j];
+        if ((yi > lat) !== (yj > lat) && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    };
+    const pts = [];
+    for (let lat = -60; lat <= 84; lat += 3.2) {
+      const step = 3.2 / Math.max(0.25, Math.cos(lat * Math.PI / 180));
+      for (let lon = -180; lon < 180; lon += step) {
+        const land = polys.some(p => inPoly(lon, lat, p));
+        pts.push({ lon: lon * Math.PI / 180, lat: lat * Math.PI / 180, land });
+      }
+    }
+    const tilt = -0.35, ct = Math.cos(tilt), st = Math.sin(tilt);
+    const draw = (t) => {
+      const cv = this.globeRef.current;
+      if (!cv) { this._globeRaf = requestAnimationFrame(draw); return; }
+      const ctx = cv.getContext('2d');
+      const W = cv.width, R = W * 0.47, cx = W / 2, cy = W / 2;
+      ctx.clearRect(0, 0, W, W);
+      const rot = t * 0.00012;
+      for (const p of pts) {
+        const lon = p.lon + rot;
+        const cl = Math.cos(p.lat);
+        let x = cl * Math.sin(lon), y = Math.sin(p.lat), z = cl * Math.cos(lon);
+        const y2 = y * ct - z * st, z2 = y * st + z * ct;
+        if (z2 <= 0.02) continue;
+        const px = cx + x * R, py = cy - y2 * R;
+        const fade = Math.min(1, z2 * 1.6);
+        if (p.land) {
+          ctx.fillStyle = `rgba(255,92,53,${(0.25 + 0.7 * fade).toFixed(3)})`;
+          ctx.beginPath(); ctx.arc(px, py, 2.4 + 1.2 * z2, 0, 6.284); ctx.fill();
+        } else {
+          ctx.fillStyle = `rgba(255,92,53,${(0.05 + 0.09 * fade).toFixed(3)})`;
+          ctx.beginPath(); ctx.arc(px, py, 1.1, 0, 6.284); ctx.fill();
+        }
+      }
+      this._globeRaf = requestAnimationFrame(draw);
+    };
+    this._globeRaf = requestAnimationFrame(draw);
+    this._onRes = () => this.setState({ w: window.innerWidth });
+    window.addEventListener('resize', this._onRes);
+    this.setState({ w: window.innerWidth });
+  }
+  componentWillUnmount() { cancelAnimationFrame(this._globeRaf); window.removeEventListener('resize', this._onRes); }
+  renderVals() {
+    const es = (this.state.lang ?? this.props.lang ?? 'es') === 'es';
+
+    const page = this.state.page;
+    const go = (p) => (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ page: p, menuOpen: false }); window.scrollTo(0, 0); };
+    const mob = (this.state.w ?? window.innerWidth) < 1060;
+    const navC = (p) => page === p ? '#ff5c35' : '#9a9a96';
+    return {
+      globeRef: this.globeRef,
+      mob, notMob: !mob,
+      menuOpen: !!this.state.menuOpen,
+      toggleMenu: () => this.setState(s => ({ menuOpen: !s.menuOpen })),
+      menuIcon: this.state.menuOpen ? '✕' : '☰',
+      heroCols: mob ? '1fr' : '1.2fr 1fr',
+      hH2: mob ? '46px' : '84px',
+      h2Lg: mob ? '40px' : '64px',
+      h2Md: mob ? '34px' : '56px',
+      cellBL: mob ? 'none' : '1px solid #2e2e30',
+      cellBT: mob ? '1px solid #2e2e30' : 'none',
+      cellBR: mob ? 'none' : '1px solid #2e2e30',
+      noColDir: mob ? 'row' : 'column',
+      homeTableCols: mob ? '44px 1fr 60px' : '70px 1.4fr 1fr 120px',
+      stackDisp: mob ? 'none' : 'block',
+      twoCols: mob ? '1fr' : '1fr 1fr',
+      threeCols: mob ? '1fr' : '1fr 1fr 1fr',
+      workCols: mob ? '1fr' : '160px 1.3fr 1fr',
+      aboutCols: mob ? '1fr' : '420px 1fr',
+      tlCols: mob ? '1fr' : '220px 1.2fr 1fr',
+      blogCols: mob ? '80px 1fr 60px' : '70px 120px 1.5fr 1fr 110px',
+      cEmailFs: mob ? '20px' : '34px',
+      toggleLang: () => this.setState(s => ({ lang: (s.lang ?? this.props.lang ?? 'es') === 'es' ? 'en' : 'es' })),
+      langLabel: es ? 'ES / en' : 'es / EN',
+      pgHome: page === 'home', pgWork: page === 'work', pgServices: page === 'services', pgAbout: page === 'about', pgBlog: page === 'blog', pgContact: page === 'contact',
+      goHome: go('home'), goWork: go('work'), goServices: go('services'), goAbout: go('about'), goBlog: go('blog'), goContact: go('contact'),
+      navHomeC: navC('home'), navWorkC: navC('work'), navServicesC: navC('services'), navAboutC: navC('about'), navBlogC: navC('blog'), navContactC: navC('contact'),
+      tNavHome: 'INDEX',
+      tNavWork: es ? 'PROYECTOS' : 'WORK',
+      tNavServices: es ? 'SERVICIOS' : 'SERVICES',
+      tNavAbout: es ? 'SOBRE MÍ' : 'ABOUT',
+      tNavContact: es ? 'CONTACTO' : 'CONTACT',
+      tAvail: (this.props.available ?? true) ? (es ? 'DISPONIBLE' : 'AVAILABLE') : (es ? 'SIN CUPO' : 'FULLY BOOKED'),
+      tColProject: es ? 'Proyecto' : 'Project',
+      tColYear: es ? 'Año' : 'Year',
+      tSrv1Label: es ? 'Para empresas' : 'For companies',
+      tSrv1: es ? 'Consultoría e implementación de IA' : 'AI consulting & implementation',
+      tSrv2Label: es ? 'Productos' : 'Products',
+      tSrv2: es ? 'Plantillas de agentes y cursos' : 'Agent templates & courses',
+      hSub: es ? 'AI Engineer especializado en LLMs, RAG y agentes. Diseño, construyo y opero sistemas de IA en producción para empresas y productos digitales.' : 'AI Engineer focused on LLMs, RAG and agents. I design, build and operate production AI systems for companies and digital products.',
+      hCta: es ? 'CONTACTO' : 'CONTACT',
+      projects: [
+        { no: '001', year: '2025', title: es ? 'Copiloto RAG empresarial' : 'Enterprise RAG copilot', stack: 'Python · LangChain · pgvector',
+          desc: es ? 'Asistente interno sobre la base documental de la empresa: ingesta, retrieval híbrido, respuestas con citas verificables y control de acceso por rol.' : 'Internal assistant over the company knowledge base: ingestion, hybrid retrieval, answers with verifiable citations and role-based access.',
+          m1l: es ? 'Precisión (eval)' : 'Accuracy (eval)', m1: '92%', m2l: es ? 'Tiempo de búsqueda' : 'Search time', m2: '−40%', m3l: es ? 'Usuarios internos' : 'Internal users', m3: '1.2k' },
+        { no: '002', year: '2025', title: es ? 'Suite de evaluación LLM' : 'LLM evaluation suite', stack: 'TypeScript · Ragas · CI',
+          desc: es ? 'Pipeline de evaluación continua para features con LLM: datasets dorados, métricas automáticas y gates de calidad integrados en CI.' : 'Continuous evaluation pipeline for LLM features: golden datasets, automated metrics and quality gates wired into CI.',
+          m1l: es ? 'Casos dorados' : 'Golden cases', m1: '300+', m2l: 'Releases / mes', m2: '12', m3l: es ? 'Regresiones críticas' : 'Critical regressions', m3: '0' },
+        { no: '003', year: '2024', title: es ? 'Generación automática de código' : 'Automatic code generation', stack: 'Claude API · AST · CI',
+          desc: es ? 'Sistema que genera código listo para revisión a partir de un requerimiento: análisis del repo, generación guiada por tests y validación automática en CI.' : 'System that turns a requirement into review-ready code: repo analysis, test-guided generation and automatic CI validation.',
+          m1l: es ? 'Tiempo a PR' : 'Time to PR', m1: '−75%', m2l: es ? 'Tests en verde' : 'Tests passing', m2: '94%', m3l: es ? 'PRs aceptados' : 'PRs merged', m3: '8/10' },
+        { no: '004', year: '2024', title: es ? 'Agentes de operaciones' : 'Operations agents', stack: es ? 'Agents · Tools · Orquestación' : 'Agents · Tools · Orchestration',
+          desc: es ? 'Agentes con herramientas para back-office: triage de tickets, extracción de datos y flujos con aprobación humana en pasos críticos.' : 'Tool-using agents for back-office: ticket triage, data extraction and human-approval flows on critical steps.',
+          m1l: es ? 'Tickets auto-resueltos' : 'Auto-resolved tickets', m1: '70%', m2l: es ? 'Operación' : 'Operation', m2: '24/7', m3l: 'HITL', m3: '✓' },
+      ],
+      wTitle: es ? 'Proyectos' : 'Work',
+      wCount: es ? '004 PROYECTOS · 2024—2025' : '004 PROJECTS · 2024—2025',
+      wMore: es ? '¿Quieres el detalle técnico de algún proyecto?' : 'Want the technical deep-dive on any project?',
+      sTitle: es ? 'Servicios' : 'Services',
+      sConsultDesc: es ? 'Acompaño a empresas de la idea al sistema en producción. Alcance claro, entregables medibles y transferencia de conocimiento al equipo.' : 'I take companies from idea to production system. Clear scope, measurable deliverables and knowledge transfer to the team.',
+      steps: [
+        { no: '01', title: es ? 'Diagnóstico' : 'Assessment', desc: es ? 'Caso de uso, datos disponibles, riesgos y criterio de éxito. Una semana, informe accionable.' : 'Use case, available data, risks and success criteria. One week, actionable report.' },
+        { no: '02', title: es ? 'Prototipo medible' : 'Measurable prototype', desc: es ? 'RAG o agente funcionando sobre datos reales, con suite de evaluación desde el día uno.' : 'RAG or agent running on real data, with an evaluation suite from day one.' },
+        { no: '03', title: es ? 'Producción' : 'Production', desc: es ? 'Deploy, observabilidad, costos bajo control y handoff documentado a tu equipo.' : 'Deploy, observability, costs under control and documented handoff to your team.' },
+      ],
+      sProdDesc: es ? 'Lo que aprendo en consultoría lo empaqueto en productos listos para usar.' : 'What I learn consulting, I package into ready-to-use products.',
+      products: [
+        { title: es ? 'Plantillas de agentes' : 'Agent templates', tag: 'REPO', desc: es ? 'Repositorios listos para producción: agente + herramientas + evals + deploy. Documentados y mantenidos.' : 'Production-ready repos: agent + tools + evals + deploy. Documented and maintained.' },
+        { title: es ? 'Cursos prácticos' : 'Hands-on courses', tag: 'VIDEO', desc: es ? 'Formación para equipos técnicos: de cero a sistema de IA evaluado y desplegado, con código real.' : 'Training for technical teams: from zero to an evaluated, deployed AI system, with real code.' },
+      ],
+      sCta: es ? 'AGENDAR LLAMADA' : 'BOOK A CALL',
+      aTitle: es ? 'Sobre mí' : 'About me',
+      aLangLabel: es ? 'IDIOMAS' : 'LANGUAGES',
+      aBio1: es ? 'Soy Jhonier Negrete, AI Engineer con base en Medellín. Ayudo a empresas a llevar LLMs, RAG y agentes a producción: sistemas fiables, medibles y que aguantan usuarios reales — no demos.' : "I'm Jhonier Negrete, an AI Engineer based in Medellín. I help companies take LLMs, RAG and agents to production: reliable, measurable systems that survive real users — not demos.",
+      aBio2: es ? 'Me importa el criterio de producto tanto como el modelo: evaluación desde el día uno, costos bajo control y decisiones que se pueden defender con datos. También creo plantillas y cursos para que otros equipos lleguen más rápido.' : 'I care about product judgment as much as the model: evaluation from day one, costs under control and decisions you can defend with data. I also build templates and courses so other teams get there faster.',
+      aTimelineLabel: es ? 'TRAYECTORIA' : 'TRACK RECORD',
+      timeline: [
+        { period: '2024 — HOY', role: es ? 'AI Engineer independiente' : 'Independent AI Engineer', desc: es ? 'Consultoría e implementación de sistemas de IA para empresas. Plantillas y cursos.' : 'AI systems consulting and implementation for companies. Templates and courses.' },
+        { period: '2022 — 2024', role: 'ML Engineer', desc: es ? 'Modelos en producción: pipelines de datos, serving, monitoreo y evaluación continua.' : 'Models in production: data pipelines, serving, monitoring and continuous evaluation.' },
+        { period: '2019 — 2022', role: 'Software Engineer', desc: es ? 'Backend y plataformas. La base de ingeniería que hace que la IA llegue a producción.' : 'Backend and platforms. The engineering base that gets AI to production.' },
+      ],
+      bCount: es ? '005 ARTÍCULOS · 2024—2026' : '005 POSTS · 2024—2026',
+      bColDate: es ? 'Fecha' : 'Date',
+      bColTitle: es ? 'Artículo' : 'Post',
+      bColRead: es ? 'Lectura' : 'Read',
+      bNote: es ? 'Escribo sobre lo que aprendo llevando IA a producción.' : 'I write about what I learn shipping AI to production.',
+      posts: [
+        { no: '005', date: '2026-06', title: es ? 'Evals que sí atrapan regresiones' : 'Evals that actually catch regressions', excerpt: es ? 'Cómo diseñar datasets dorados que fallan cuando tu sistema falla, no cuando cambia el formato.' : 'How to design golden datasets that fail when your system fails, not when the format changes.', tags: 'Evals · CI', read: '8 MIN' },
+        { no: '004', date: '2026-03', title: es ? 'RAG híbrido sin sobre-ingeniería' : 'Hybrid RAG without over-engineering', excerpt: es ? 'BM25 + vectores + rerank: cuándo cada pieza aporta y cuándo solo agrega latencia.' : 'BM25 + vectors + rerank: when each piece helps and when it just adds latency.', tags: 'RAG · Retrieval', read: '11 MIN' },
+        { no: '003', date: '2025-11', title: es ? 'Agentes con aprobación humana' : 'Agents with human approval', excerpt: es ? 'Patrones HITL para que un agente opere 24/7 sin romper nada crítico.' : 'HITL patterns so an agent runs 24/7 without breaking anything critical.', tags: 'Agents · HITL', read: '9 MIN' },
+        { no: '002', date: '2025-05', title: es ? 'Fine-tuning vs prompting: los números' : 'Fine-tuning vs prompting: the numbers', excerpt: es ? 'Costos reales de LoRA + vLLM frente a APIs comerciales en un caso legal-financiero.' : 'Real costs of LoRA + vLLM versus commercial APIs in a legal-financial case.', tags: 'Fine-tuning · Costs', read: '12 MIN' },
+        { no: '001', date: '2024-10', title: es ? 'Observabilidad para LLMs en producción' : 'Observability for LLMs in production', excerpt: es ? 'Trazas, costos por request y alertas de deriva: el mínimo viable para dormir tranquilo.' : 'Traces, per-request costs and drift alerts: the viable minimum to sleep at night.', tags: 'MLOps · Observability', read: '7 MIN' },
+      ],
+      cKicker: es ? 'DISPONIBLE PARA EMPLEO Y PROYECTOS' : 'AVAILABLE FOR ROLES & PROJECTS',
+      cTitle: es ? 'Hablemos' : "Let's talk",
+      cNote: es ? 'Cuéntame tu caso de uso, el estado de tus datos y qué quieres lograr. Respondo en 24–48 h, en español o inglés.' : 'Tell me your use case, the state of your data and what you want to achieve. I reply within 24–48 h, in Spanish or English.',
+    };
+  }
+}
+
+</script>
+</body>
+</html>

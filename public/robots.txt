@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jnegrete.dev/sitemap-index.xml

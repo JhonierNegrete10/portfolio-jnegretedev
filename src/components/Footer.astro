@@ -1,0 +1,50 @@
+---
+import type { Lang } from '../i18n/routes';
+import { localizedPath } from '../i18n/routes';
+import { getUi } from '../i18n/ui';
+import { profile } from '../data/profile';
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = getUi(lang);
+const contactHref = localizedPath('contact', lang);
+---
+
+<footer class="footer">
+  <div>
+    <a href={`mailto:${profile.email}`} class="footer__email">{profile.email}</a>
+  </div>
+  <div class="footer__links">
+    <a href={profile.links.linkedin.url} target="_blank" rel="noopener noreferrer">{t.footer.linkedin}</a>
+    <a href={profile.links.github.url} target="_blank" rel="noopener noreferrer">{t.footer.github}</a>
+    <a href={contactHref}>{t.footer.contact}</a>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+  }
+
+  .footer__email {
+    color: var(--color-muted);
+  }
+
+  .footer__links {
+    display: flex;
+    gap: 20px;
+  }
+</style>

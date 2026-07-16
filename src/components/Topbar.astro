@@ -1,0 +1,316 @@
+---
+import type { Lang, PageKey } from '../i18n/routes';
+import { localizedPath, getLangToggleHref } from '../i18n/routes';
+import { getUi } from '../i18n/ui';
+import { profile } from '../data/profile';
+
+export interface Props {
+  lang: Lang;
+  page: PageKey;
+  /** Pass when the current page is a blog post detail (not the index). */
+  isBlogPost?: boolean;
+  /** Slug of this post's translation in the other language, if any. */
+  translatedSlug?: string;
+}
+
+const { lang, page, isBlogPost = false, translatedSlug } = Astro.props;
+const t = getUi(lang);
+
+const navItems: { key: PageKey; label: string }[] = [
+  { key: 'home', label: t.nav.home },
+  { key: 'projects', label: t.nav.projects },
+  { key: 'services', label: t.nav.services },
+  { key: 'about', label: t.nav.about },
+  { key: 'blog', label: t.nav.blog },
+  { key: 'contact', label: t.nav.contact },
+];
+
+const langHref = getLangToggleHref({ lang, page, isBlogPost, translatedSlug });
+const availabilityLabel = profile.available ? t.topbar.available : t.topbar.fullyBooked;
+const homeHref = localizedPath('home', lang);
+---
+
+<!-- Desktop topbar (>= 1060px) -->
+<header class="topbar topbar--desktop">
+  <a href={homeHref} class="topbar__logo">{t.siteName}</a>
+  <nav class="topbar__nav" aria-label="Primary">
+    {
+      navItems.map((item) => (
+        <a
+          href={localizedPath(item.key, lang)}
+          class:list={['topbar__nav-link', { 'is-active': page === item.key }]}
+          aria-current={page === item.key ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
+  <div class="topbar__availability">
+    <span class="dot" aria-hidden="true"></span> {availabilityLabel}
+  </div>
+  <div class="topbar__meta">
+    <span class="topbar__location">{t.topbar.location}</span>
+    <a href={langHref} class="lang-toggle" aria-label={t.topbar.langToggleAria}>
+      <span class="lang-toggle__icon" aria-hidden="true">⇄</span>{t.topbar.langToggleLabel}
+    </a>
+  </div>
+</header>
+
+<!-- Mobile topbar (< 1060px) -->
+<header class="topbar topbar--mobile">
+  <a href={homeHref} class="topbar__logo">{t.siteName}</a>
+  <div class="topbar__mobile-actions">
+    <span class="dot dot--mobile" aria-hidden="true"></span>
+    <a href={langHref} class="lang-toggle" aria-label={t.topbar.langToggleAria}>
+      <span class="lang-toggle__icon" aria-hidden="true">⇄</span>{t.topbar.langToggleLabel}
+    </a>
+    <button
+      type="button"
+      class="menu-toggle"
+      data-menu-toggle
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      aria-label={t.topbar.menuOpenAria}
+    >
+      <span data-menu-icon aria-hidden="true">☰</span>
+    </button>
+  </div>
+</header>
+
+<nav id="mobile-menu" class="mobile-menu" data-mobile-menu hidden aria-label="Mobile">
+  {
+    navItems.map((item) => (
+      <a
+        href={localizedPath(item.key, lang)}
+        class:list={['mobile-menu__link', { 'is-active': page === item.key }]}
+        aria-current={page === item.key ? 'page' : undefined}
+      >
+        {item.label}
+      </a>
+    ))
+  }
+  <div class="mobile-menu__status">
+    <span class="dot" aria-hidden="true"></span> {availabilityLabel} — {t.topbar.location}
+  </div>
+</nav>
+
+<style>
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: var(--font-mono);
+  }
+
+  .topbar--desktop {
+    display: grid;
+    grid-template-columns: 170px minmax(500px, 1fr) 150px 220px;
+  }
+
+  .topbar--mobile {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .topbar__logo {
+    padding: 16px 20px;
+    border-right: 1px solid var(--color-border);
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .topbar__nav {
+    padding: 16px 20px;
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    gap: 18px;
+    white-space: nowrap;
+    overflow-x: auto;
+  }
+
+  .topbar__nav-link {
+    color: var(--color-muted);
+  }
+
+  .topbar__nav-link.is-active {
+    color: var(--color-accent);
+  }
+
+  .topbar__nav-link:hover {
+    opacity: 1;
+    color: var(--color-accent);
+  }
+
+  .topbar__availability {
+    padding: 16px 20px;
+    border-right: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+
+  .topbar__meta {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    white-space: nowrap;
+    gap: 12px;
+  }
+
+  .topbar__location {
+    color: var(--color-muted);
+  }
+
+  .dot {
+    color: var(--color-accent);
+    display: inline-block;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+
+  .dot--mobile {
+    margin-right: 4px;
+  }
+
+  .lang-toggle {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    background: transparent;
+    color: var(--color-text);
+    border: 1px solid var(--color-border-strong);
+    padding: 5px 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition:
+      border-color 0.15s,
+      color 0.15s;
+  }
+
+  .lang-toggle:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    opacity: 1;
+  }
+
+  .lang-toggle__icon {
+    color: var(--color-accent);
+  }
+
+  .topbar__mobile-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+  }
+
+  .menu-toggle {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    background: none;
+    color: var(--color-text);
+    border: 1px solid var(--color-border-strong);
+    padding: 4px 12px;
+    cursor: pointer;
+  }
+
+  .mobile-menu {
+    position: fixed;
+    top: 53px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--color-bg);
+    z-index: 9;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    overflow-y: auto;
+  }
+
+  .mobile-menu[hidden] {
+    display: none;
+  }
+
+  .mobile-menu__link {
+    padding: 20px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--color-muted);
+  }
+
+  .mobile-menu__link.is-active {
+    color: var(--color-accent);
+  }
+
+  .mobile-menu__status {
+    padding: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--color-muted-dim);
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 1059px) {
+    .topbar--desktop {
+      display: none;
+    }
+
+    .topbar--mobile {
+      display: flex;
+    }
+  }
+</style>
+
+<script>
+  function setupMobileMenu() {
+    const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+    const menu = document.querySelector<HTMLElement>('[data-mobile-menu]');
+    const icon = document.querySelector<HTMLElement>('[data-menu-icon]');
+    if (!toggle || !menu || !icon) return;
+
+    const close = () => {
+      menu.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      icon.textContent = '☰';
+    };
+
+    const open = () => {
+      menu.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+      icon.textContent = '✕';
+    };
+
+    toggle.addEventListener('click', () => {
+      if (menu.hidden) open();
+      else close();
+    });
+
+    menu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', close);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !menu.hidden) close();
+    });
+
+    // Keep menu state consistent if the viewport crosses the breakpoint
+    // while the mobile overlay is open.
+    const mq = window.matchMedia('(min-width: 1060px)');
+    mq.addEventListener('change', (event) => {
+      if (event.matches) close();
+    });
+  }
+
+  setupMobileMenu();
+</script>
