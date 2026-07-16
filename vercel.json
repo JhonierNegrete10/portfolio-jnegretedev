@@ -4,9 +4,9 @@
   "trailingSlash": true,
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "has": [{ "type": "host", "value": "www.jnegrete.dev" }],
-      "destination": "https://jnegrete.dev/:path*",
+      "destination": "https://jnegrete.dev/$1",
       "permanent": true
     }
   ]
