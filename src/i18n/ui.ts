@@ -233,3 +233,60 @@ export type UiDictionary = (typeof ui)[Lang];
 export function getUi(lang: Lang): UiDictionary {
   return ui[lang];
 }
+
+/* =========================================================================
+ * Appended by the Home/Projects/Services page agent (tasks 3.3-3.5).
+ * A handful of strings needed for the Home hero globe were not present in
+ * the dictionary above. Kept as a separate export (not merged into `ui`)
+ * so this file's existing object literals stay untouched for the sibling
+ * agent also editing it — merge these in at the call site with getUiExtra.
+ * ========================================================================= */
+export const uiExtra = {
+  es: {
+    home: {
+      /** role="img" aria-label for the canvas globe (task 3.3, accessibility). */
+      globeAriaLabel: 'Globo terrestre animado, centrado en Medellín, Colombia',
+      /** Technical readout label over the globe — same string in both locales in the reference design. */
+      satLabel: 'SAT — LINK ACTIVE',
+    },
+    /**
+     * Page title/description for <Head> — the base `meta` object above only
+     * covers Home. Base.astro/Head.astro append " — {profile.name}" to
+     * `title` automatically, so these must NOT repeat the site name.
+     */
+    meta: {
+      projects: {
+        title: 'Proyectos',
+        description:
+          'Proyectos reales de Jhonier Negrete: orquestación de agentes y gobernanza LLM, productos propios, visión artificial y herramientas open source.',
+      },
+      services: {
+        title: 'Servicios',
+        description:
+          'Consultoría e implementación de IA para empresas: diagnóstico, agentes y RAG con evaluación desde el día uno, gobernanza LLM.',
+      },
+    },
+  },
+  en: {
+    home: {
+      globeAriaLabel: 'Animated globe centered on Medellín, Colombia',
+      satLabel: 'SAT — LINK ACTIVE',
+    },
+    meta: {
+      projects: {
+        title: 'Work',
+        description:
+          'Real projects by Jhonier Negrete: agent orchestration and LLM governance, own products, computer vision and open source tools.',
+      },
+      services: {
+        title: 'Services',
+        description:
+          'AI consulting and implementation for companies: diagnosis, agents and RAG with evaluation from day one, LLM governance.',
+      },
+    },
+  },
+} as const satisfies Record<Lang, unknown>;
+
+export function getUiExtra(lang: Lang) {
+  return uiExtra[lang];
+}

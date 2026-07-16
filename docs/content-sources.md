@@ -48,6 +48,12 @@
 | ScrapyTube — 3★, scraping de listas de reproducción de YouTube | Proyectos (detalle #006) | `api.github.com/repos/JhonierNegrete10/ScrapyTube`: `stargazers_count: 3`, `language: "Jupyter Notebook"`, `description: "ScrapyTube es un proyecto de web scraping diseñado para extraer información específica de diferentes sitios web, como listas de reproducción de YouTube..."` |
 | Delta-Robot — 2★, robot delta 3 GDL, tesis EIA (interfaz Python + firmware ESP32) | Proyectos (detalle #006) | `api.github.com/repos/JhonierNegrete10/Delta-Robot`: `stargazers_count: 2`, `language: "Python"`, `description: "...thesis 'Diseño e implementación de un robot delta de 3 grados de libertad'...GUI made in python...logic in the embedded system (ESP32)"` |
 
+## Skills (marquee, `src/data/skills.ts`)
+
+| Dato publicado | Página/sección | Fuente exacta |
+|---|---|---|
+| Marquee "LLMs · RAG · Agents · Evals · LangGraph · LLMOps · FastAPI · AWS" | Home (marquee bajo el hero) | CV — LLMs/RAG/Agents/Evals: descripción del rol AI Engineer en GBM Colombia; LangGraph: stack de agentificación GBM; LLMOps: término genérico para la gobernanza LLM (Bifrost/LiteLLM) del rol GBM; FastAPI: capstone TTSFlow (EIA); AWS: despliegue de TTSFlow en AWS Lambda/EC2/S3 |
+
 ## Servicios (`src/data/services.ts`)
 
 | Dato publicado | Página/sección | Fuente exacta |
@@ -70,6 +76,20 @@
 | Dato publicado | Página/sección | Fuente exacta |
 |---|---|---|
 | Composición gráfica (patrón grid/orbital con coordenadas de Medellín) en lugar de foto o placeholder de texto | Sobre mí | Decisión usuario 2026-07-16 ("retrato = composición gráfica, no foto"); coordenadas geográficas de Medellín (mismo dato que el globo de Home) |
+| `profile.photoUrl` opcional para reemplazar la composición por una foto real | Sobre mí | Decisión usuario 2026-07-16; campo swappable en `src/data/profile.ts`, sin valor por defecto (undefined) |
+
+## Sobre mí — bio (`profile.bio`, tarea 3.6)
+
+| Dato publicado | Página/sección | Fuente exacta |
+|---|---|---|
+| Párrafo 1: rol actual AI Engineer — GBM Colombia desde may 2024, LangChain/LangGraph, Bifrost/LiteLLM, Langfuse/Phoenix | Sobre mí (bio) | Compuesto a partir de datos ya trazados arriba (§ Experiencia y educación, entrada GBM Colombia) — ningún dato nuevo, solo redacción en primera persona |
+| Párrafo 2: base Ingeniería Mecatrónica EIA 2017–2022, Especialización IA EIA 2024 (capstone TTSFlow), founder FiniaERP/NextEraTech | Sobre mí (bio) | Compuesto a partir de datos ya trazados arriba (§ Experiencia y educación, entradas EIA/FiniaERP/NextEraTech) |
+
+## Sobre mí — stack de capacidades (`experience.capabilityStack`, tarea 3.6)
+
+| Dato publicado | Página/sección | Fuente exacta |
+|---|---|---|
+| Chips Python, LangChain, LangGraph, Bifrost, LiteLLM, Langfuse, Phoenix, FastAPI, PyTorch, AWS, Docker, OpenCV, Elasticsearch, YOLO | Sobre mí (stack) | Unión de-duplicada de los stacks ya trazados en `src/data/projects.ts` (#001 GBM, #004 TTSFlow, #005 INTECOL) y `src/data/experience.ts` (MEMBO: PyTorch/OpenCV/Elasticsearch) — ningún dato nuevo |
 
 ## CV descargable
 

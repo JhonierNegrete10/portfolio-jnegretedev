@@ -1,0 +1,155 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getUi } from '../../i18n/ui';
+import { profile } from '../../data/profile';
+import { localizedPath } from '../../i18n/routes';
+
+const lang = 'es' as const;
+const t = getUi(lang);
+const path = localizedPath('contact', lang);
+const alternatePath = localizedPath('contact', 'en');
+const kicker = profile.available ? t.contact.kickerAvailable : t.contact.kickerBooked;
+---
+
+<Base lang={lang} page="contact" title={t.contact.title} description={t.meta.home.description} path={path} alternatePath={alternatePath}>
+  <div class="hero">
+    <div class="hero__kicker">{kicker}</div>
+    <h1>{t.contact.title}<span class="accent">.</span></h1>
+    <a href={`mailto:${profile.email}`} class="email">{profile.email}</a>
+    <p class="note">{t.contact.note}</p>
+  </div>
+
+  <div class="cards">
+    <a href={profile.links.linkedin.url} target="_blank" rel="noopener noreferrer" class="card">
+      <div class="card__no">01</div>
+      <div class="card__label">{t.contact.linkedin}</div>
+    </a>
+    <a href={profile.links.github.url} target="_blank" rel="noopener noreferrer" class="card">
+      <div class="card__no">02</div>
+      <div class="card__label">{t.contact.github}</div>
+    </a>
+    <a href="/cv.pdf" class="card">
+      <div class="card__no">03</div>
+      <div class="card__label">{t.contact.cv}</div>
+    </a>
+  </div>
+</Base>
+
+<style>
+  .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 64px 24px;
+    border-bottom: 1px solid var(--color-border);
+    position: relative;
+    overflow: hidden;
+    background-image: radial-gradient(rgba(255, 92, 53, 0.14) 1px, transparent 1.5px);
+    background-size: 28px 28px;
+    animation: gridDrift 14s linear infinite;
+    min-height: calc(100vh - 260px);
+  }
+
+  .hero__kicker {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-accent);
+    margin-bottom: 18px;
+  }
+
+  .hero h1 {
+    font-family: var(--font-sans);
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin: 0 0 24px;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .accent {
+    color: var(--color-accent);
+  }
+
+  .email {
+    align-self: flex-start;
+    word-break: break-all;
+    font-family: var(--font-sans);
+    font-size: 34px;
+    font-weight: 600;
+    color: var(--color-text);
+    border-bottom: 2px solid var(--color-accent);
+    padding-bottom: 4px;
+  }
+
+  .email:hover {
+    opacity: 0.85;
+  }
+
+  .note {
+    font-size: 13px;
+    color: var(--color-muted);
+    margin: 28px 0 0;
+    max-width: 440px;
+    line-height: 1.8;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .card {
+    display: block;
+    padding: 32px 24px;
+    border-right: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .card:last-child {
+    border-right: none;
+  }
+
+  .card:hover {
+    opacity: 1;
+    color: var(--color-accent);
+  }
+
+  .card__no {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted-dim);
+    margin-bottom: 10px;
+  }
+
+  .card__label {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 1059px) {
+    .hero h1 {
+      font-size: 40px;
+    }
+
+    .email {
+      font-size: 20px;
+    }
+
+    .cards {
+      grid-template-columns: 1fr;
+    }
+
+    .card {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .card:last-child {
+      border-bottom: none;
+    }
+  }
+</style>

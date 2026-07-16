@@ -1,0 +1,189 @@
+---
+/**
+ * About-page portrait slot.
+ *
+ * The reference design (reference/Portafolio 5a - Sitio.dc.html) leaves a
+ * literal "[ retrato — foto aquí ]" text placeholder — that MUST NOT ship
+ * (design.md Decision 10, spec "Retrato sin placeholder"). Until a real
+ * photo is set via `profile.photoUrl`, this renders a CSS/SVG-only graphic
+ * composition coherent with the rest of the site: a dotted orbital grid
+ * centered on a crosshair marking Medellín's coordinates.
+ *
+ * Purely decorative — labeled via aria-hidden + a visible text caption
+ * from ui.about.portraitLabel (accessibility: no meaningless image alt).
+ */
+import { profile } from '../data/profile';
+
+export interface Props {
+  /** Visible caption describing the composition (from ui.ts, already localized). */
+  label: string;
+}
+
+const { label } = Astro.props;
+const { latLabel, lonLabel } = profile.coordinates;
+---
+
+{
+  profile.photoUrl ? (
+    <div class="portrait">
+      <img src={profile.photoUrl} alt={profile.name} />
+    </div>
+  ) : (
+    <div class="portrait portrait--composition" role="img" aria-label={label}>
+      <div class="portrait__grid" aria-hidden="true"></div>
+      <div class="portrait__rings" aria-hidden="true">
+        <span class="ring ring--1"></span>
+        <span class="ring ring--2"></span>
+        <span class="ring ring--3"></span>
+        <span class="ring__dot"></span>
+      </div>
+      <div class="portrait__crosshair" aria-hidden="true">
+        <span class="crosshair__line crosshair__line--h"></span>
+        <span class="crosshair__line crosshair__line--v"></span>
+      </div>
+      <div class="portrait__coords" aria-hidden="true">
+        <span>{latLabel}</span>
+        <span>{lonLabel}</span>
+      </div>
+      <p class="portrait__caption">{label}</p>
+    </div>
+  )
+}
+
+<style>
+  .portrait {
+    height: 420px;
+    border-bottom: 1px solid var(--color-border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .portrait--composition {
+    background:
+      repeating-linear-gradient(45deg, #1c1c1e 0 14px, #191919 14px 28px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .portrait__grid {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 92, 53, 0.16) 1px, transparent 1.5px);
+    background-size: 28px 28px;
+    animation: gridDrift 14s linear infinite;
+  }
+
+  .portrait__rings {
+    position: relative;
+    width: 190px;
+    height: 190px;
+  }
+
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px dashed rgba(236, 236, 234, 0.22);
+  }
+
+  .ring--1 {
+    inset: 0;
+    border-color: rgba(255, 92, 53, 0.4);
+    border-style: solid;
+    box-shadow:
+      0 0 40px rgba(255, 92, 53, 0.14),
+      inset 0 0 30px rgba(255, 92, 53, 0.08);
+  }
+
+  .ring--2 {
+    inset: -28px;
+    animation: orbit 12s linear infinite;
+  }
+
+  .ring--3 {
+    inset: -58px;
+    border-color: rgba(255, 92, 53, 0.16);
+    animation: spinSlow 26s linear infinite;
+  }
+
+  .ring__dot {
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 12px rgba(255, 92, 53, 0.9);
+  }
+
+  .portrait__crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    transform: translate(-50%, -50%);
+  }
+
+  .crosshair__line {
+    position: absolute;
+    background: var(--color-accent);
+  }
+
+  .crosshair__line--h {
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    transform: translateY(-50%);
+  }
+
+  .crosshair__line--v {
+    left: 50%;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    transform: translateX(-50%);
+  }
+
+  .portrait__coords {
+    position: absolute;
+    bottom: 16px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: #5c5c58;
+    text-transform: uppercase;
+  }
+
+  .portrait__caption {
+    position: absolute;
+    top: 16px;
+    left: 20px;
+    right: 20px;
+    margin: 0;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: #5c5c58;
+    text-transform: uppercase;
+    line-height: 1.5;
+    max-width: 260px;
+  }
+
+  @media (max-width: 1059px) {
+    .portrait {
+      height: 320px;
+    }
+  }
+</style>

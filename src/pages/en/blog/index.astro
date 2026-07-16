@@ -1,0 +1,220 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import { getUi } from '../../../i18n/ui';
+import { localizedPath, blogPostPath, rssPath } from '../../../i18n/routes';
+
+const lang = 'en' as const;
+const t = getUi(lang);
+const path = localizedPath('blog', lang);
+const alternatePath = localizedPath('blog', 'es');
+
+const allPosts = await getCollection('blog', (entry) => entry.data.lang === lang);
+const posts = allPosts
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .map((entry, index) => {
+    const wordCount = entry.body?.trim().split(/\s+/).filter(Boolean).length ?? 0;
+    const minutes = Math.max(1, Math.round(wordCount / 200));
+    return {
+      no: String(allPosts.length - index).padStart(3, '0'),
+      href: blogPostPath(lang, entry.id),
+      date: entry.data.date.toISOString().slice(0, 10),
+      title: entry.data.title,
+      description: entry.data.description,
+      tags: entry.data.tags,
+      readMinutes: `${minutes} MIN`,
+    };
+  });
+
+const count = `${String(posts.length).padStart(3, '0')} ${t.blog.countSuffix}`;
+---
+
+<Base lang={lang} page="blog" title={t.blog.title} description={t.meta.home.description} path={path} alternatePath={alternatePath}>
+  <div class="header">
+    <h2>{t.blog.title}<span class="accent">.</span></h2>
+    <div class="count">{count}</div>
+  </div>
+
+  {
+    posts.length === 0 ? (
+      <div class="empty">
+        <div class="empty__title">{t.blog.comingSoonTitle}</div>
+        <p class="empty__body">{t.blog.comingSoonBody}</p>
+      </div>
+    ) : (
+      <>
+        <div class="row row--head">
+          <div class="col-no">No.</div>
+          <div>{t.blog.colDate}</div>
+          <div>{t.blog.colTitle}</div>
+          <div class="col-tags">{t.blog.colTags}</div>
+          <div class="col-read">{t.blog.colRead}</div>
+        </div>
+        {posts.map((post) => (
+          <a href={post.href} class="row row--post">
+            <div class="col-no">{post.no}</div>
+            <div class="row__date">{post.date}</div>
+            <div>
+              <div class="row__title">{post.title}</div>
+              <div class="row__excerpt">{post.description}</div>
+            </div>
+            <div class="col-tags row__tags">{post.tags.join(' · ')}</div>
+            <div class="col-read">{post.readMinutes}</div>
+          </a>
+        ))}
+      </>
+    )
+  }
+
+  <div class="footer-bar">
+    <a href={rssPath(lang)} class="rss-link">{t.blog.rss}</a>
+  </div>
+</Base>
+
+<style>
+  .header {
+    padding: 56px 24px 40px;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .header h2 {
+    font-family: var(--font-sans);
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin: 0;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .accent {
+    color: var(--color-accent);
+  }
+
+  .count {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-muted-dim);
+  }
+
+  .empty {
+    padding: 64px 24px;
+    border-bottom: 1px solid var(--color-border);
+    text-align: center;
+  }
+
+  .empty__title {
+    font-family: var(--font-sans);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .empty__body {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--color-muted-soft);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 70px 120px 1.5fr 1fr 110px;
+    border-bottom: 1px solid var(--color-border);
+    padding: 12px 24px;
+    gap: 16px;
+    align-items: baseline;
+  }
+
+  .row--head {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted-dim);
+  }
+
+  .row--post {
+    padding: 22px 24px;
+    color: var(--color-text);
+    font-size: 13px;
+    transition:
+      background-color 0.15s,
+      color 0.15s;
+  }
+
+  .row--post:hover {
+    background: var(--color-accent);
+    color: var(--color-bg);
+    opacity: 1;
+  }
+
+  .row__date,
+  .row__tags {
+    opacity: 0.6;
+  }
+
+  .row__title {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .row__excerpt {
+    opacity: 0.6;
+    margin-top: 6px;
+    max-width: 480px;
+    line-height: 1.6;
+  }
+
+  .col-read {
+    text-align: right;
+  }
+
+  .footer-bar {
+    padding: 32px 24px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .rss-link {
+    border: 1px solid var(--color-border-strong);
+    padding: 12px 20px;
+    color: var(--color-text);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition:
+      background-color 0.15s,
+      color 0.15s,
+      border-color 0.15s;
+  }
+
+  .rss-link:hover {
+    background: var(--color-accent);
+    color: var(--color-bg);
+    border-color: var(--color-accent);
+    opacity: 1;
+  }
+
+  @media (max-width: 1059px) {
+    .header h2 {
+      font-size: 40px;
+    }
+
+    .row {
+      grid-template-columns: 90px 1fr 60px;
+    }
+
+    .col-no,
+    .col-tags {
+      display: none;
+    }
+  }
+</style>

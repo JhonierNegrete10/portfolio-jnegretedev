@@ -114,3 +114,26 @@ export const languages: Bilingual = {
   es: 'Español nativo · Inglés profesional',
   en: 'Native Spanish · Professional English',
 };
+
+/**
+ * Capability-stack chips shown on the About page. Every entry is already
+ * traceable elsewhere in the data layer (src/data/projects.ts, this file's
+ * timeline) — this is a de-duplicated union, not new content. See
+ * docs/content-sources.md § Sobre mí — stack de capacidades.
+ */
+export const capabilityStack: string[] = [
+  'Python',
+  'LangChain',
+  'LangGraph',
+  'Bifrost',
+  'LiteLLM',
+  'Langfuse',
+  'Phoenix',
+  'FastAPI',
+  'PyTorch',
+  'AWS',
+  'Docker',
+  'OpenCV',
+  'Elasticsearch',
+  'YOLO',
+];

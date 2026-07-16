@@ -1,0 +1,138 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { getUi } from '../../i18n/ui';
+import { blogIndexPath, blogPostPath } from '../../i18n/routes';
+
+export async function getStaticPaths() {
+  const esPosts = await getCollection('blog', (entry) => entry.data.lang === 'es');
+  const enPosts = await getCollection('blog', (entry) => entry.data.lang === 'en');
+
+  return esPosts.map((entry) => {
+    const translated = entry.data.translationKey
+      ? enPosts.find((p) => p.data.translationKey === entry.data.translationKey)
+      : undefined;
+
+    return {
+      params: { slug: entry.id },
+      props: { entry, translatedSlug: translated?.id },
+    };
+  });
+}
+
+export interface Props {
+  entry: CollectionEntry<'blog'>;
+  translatedSlug?: string;
+}
+
+const { entry, translatedSlug } = Astro.props;
+const { Content } = await render(entry);
+
+const lang = 'es' as const;
+const t = getUi(lang);
+const path = blogPostPath(lang, entry.id);
+const alternatePath = translatedSlug ? blogPostPath('en', translatedSlug) : undefined;
+const dateLabel = entry.data.date.toISOString().slice(0, 10);
+---
+
+<Base
+  lang={lang}
+  page="blog"
+  title={entry.data.title}
+  description={entry.data.description}
+  path={path}
+  alternatePath={alternatePath}
+  isBlogPost
+  translatedSlug={translatedSlug}
+>
+  <article class="post">
+    <a href={blogIndexPath(lang)} class="back-link">{t.blog.backToList}</a>
+    <h1>{entry.data.title}</h1>
+    <div class="post__meta">
+      <span>{t.blog.publishedOn} {dateLabel}</span>
+      {entry.data.tags.length > 0 && <span class="post__tags">{entry.data.tags.join(' · ')}</span>}
+    </div>
+    <div class="post__body">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .post {
+    padding: 56px 24px 80px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-bottom: 32px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted);
+  }
+
+  .back-link:hover {
+    color: var(--color-accent);
+    opacity: 1;
+  }
+
+  .post h1 {
+    font-family: var(--font-sans);
+    font-size: 44px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin: 0 0 20px;
+    line-height: 1.05;
+  }
+
+  .post__meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted-dim);
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 32px;
+  }
+
+  .post__tags {
+    color: var(--color-accent);
+  }
+
+  .post__body {
+    font-size: 15px;
+    line-height: 1.9;
+    color: var(--color-muted-soft);
+  }
+
+  .post__body :global(h2),
+  .post__body :global(h3) {
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    margin-top: 2em;
+  }
+
+  .post__body :global(a) {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .post__body :global(code) {
+    background: var(--color-border);
+    padding: 2px 6px;
+    font-size: 0.9em;
+  }
+
+  .post__body :global(pre) {
+    background: #1c1c1e;
+    padding: 16px;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+  }
+</style>

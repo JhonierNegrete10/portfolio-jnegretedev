@@ -1,0 +1,169 @@
+---
+/**
+ * Services page body (task 3.5): the real freelance offering from
+ * src/data/services.ts — diagnosis -> implementation with evals ->
+ * governance/operation — laid out as the reference HTML's two-column
+ * services screen (left: pitch, right: how-we-work steps + CTA).
+ * No separate "products" column: the confirmed offering (design.md,
+ * Decision 5) is a single consulting/implementation service.
+ */
+import type { Lang } from '../i18n/routes';
+import { getUi } from '../i18n/ui';
+import { profile } from '../data/profile';
+import { services } from '../data/services';
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = getUi(lang);
+const mailtoHref = `mailto:${profile.email}`;
+---
+
+<div class="services">
+  <header class="services__header">
+    <h2 class="services__title">{t.services.title}<span class="accent">.</span></h2>
+  </header>
+
+  <div class="services__grid">
+    <div class="services__pitch">
+      <div class="services__label">{services.label[lang]}</div>
+      <h3 class="services__offer-title">{services.title[lang]}</h3>
+      <p class="services__offer-desc">{services.description[lang]}</p>
+    </div>
+
+    <div class="services__how">
+      <div class="services__how-label">{t.services.stepsLabel}</div>
+      {
+        services.steps.map((step) => (
+          <div class="step">
+            <div class="step__no">{step.no}</div>
+            <div>
+              <div class="step__title">{step.title[lang]}</div>
+              <div class="step__desc">{step.description[lang]}</div>
+            </div>
+          </div>
+        ))
+      }
+      <div class="services__cta-row">
+        <a href={mailtoHref} class="btn btn--primary">{services.cta[lang]} ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .accent {
+    color: var(--color-accent);
+  }
+
+  .services__header {
+    padding: 56px 24px 40px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .services__title {
+    font-family: var(--font-sans);
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .services__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .services__pitch {
+    border-right: 1px solid var(--color-border);
+    padding: 32px 24px;
+  }
+
+  .services__label,
+  .services__how-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-accent);
+    margin-bottom: 10px;
+  }
+
+  .services__how-label {
+    padding: 32px 24px 0;
+  }
+
+  .services__offer-title {
+    font-family: var(--font-sans);
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 12px;
+  }
+
+  .services__offer-desc {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--color-muted-soft);
+    margin: 0;
+    max-width: 460px;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    padding: 24px;
+    border-bottom: 1px solid var(--color-border);
+    gap: 8px;
+  }
+
+  .step__no {
+    color: var(--color-accent);
+    font-size: 14px;
+  }
+
+  .step__title {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .step__desc {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--color-muted);
+  }
+
+  .services__cta-row {
+    padding: 28px 24px;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 13px 22px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .btn--primary {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  @media (max-width: 1059px) {
+    .services__title {
+      font-size: 34px;
+    }
+
+    .services__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .services__pitch {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+    }
+  }
+</style>

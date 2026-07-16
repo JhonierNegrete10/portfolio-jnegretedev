@@ -22,19 +22,19 @@
 
 - [x] 3.1 Layout base: topbar sticky con nav activa (mapping de rutas i18n), indicador disponibilidad, toggle de idioma por slug, menú móvil (<1060px), footer con `contacto@jnegrete.dev` y sociales
 - [x] 3.2 Componente `<Head>` SEO: title/description por página e idioma, canonical absoluto, hreflang ES/EN + x-default, OG (`og:locale` es_CO/en_US, imagen 1200×630 en `public/og.png`), favicon + apple-touch-icon
-- [ ] 3.3 Home (ES y EN): hero + globo canvas vanilla (prefers-reduced-motion → estático; pausar rAF fuera de vista; `role="img"` + label), marquee skills, tabla de proyectos, cards de servicios
-- [ ] 3.4 Página Proyectos (ES/EN): grid de detalle con stack, año, rol y links verificables
-- [ ] 3.5 Página Servicios (ES/EN): oferta freelance (diagnóstico → implementación con evals → gobernanza/operación) con CTA a contacto
-- [ ] 3.6 Página Sobre mí (ES/EN): bio del professional summary del CV, composición gráfica en lugar del retrato (sin placeholder), datos base/idiomas/status, timeline, capability stack del CV
-- [ ] 3.7 Blog (ES/EN): listado desde collection + estado vacío "próximamente"; **páginas de detalle** con `getStaticPaths()` por idioma, render Markdown, metadata individual y retorno; feeds RSS `/rss.xml` y `/en/rss.xml` con @astrojs/rss, botón RSS enlazando al feed del idioma
-- [ ] 3.8 Página Contacto (ES/EN): `contacto@jnegrete.dev` como mailto visible, links LinkedIn/GitHub/CV
-- [ ] 3.9 Página 404 con diseño del sitio, noindex y enlaces de recuperación; `robots.txt` referenciando el sitemap
+- [x] 3.3 Home (ES y EN): hero + globo canvas vanilla (prefers-reduced-motion → estático; pausar rAF fuera de vista; `role="img"` + label), marquee skills, tabla de proyectos, cards de servicios
+- [x] 3.4 Página Proyectos (ES/EN): grid de detalle con stack, año, rol y links verificables
+- [x] 3.5 Página Servicios (ES/EN): oferta freelance (diagnóstico → implementación con evals → gobernanza/operación) con CTA a contacto
+- [x] 3.6 Página Sobre mí (ES/EN): bio del professional summary del CV, composición gráfica en lugar del retrato (sin placeholder), datos base/idiomas/status, timeline, capability stack del CV
+- [x] 3.7 Blog (ES/EN): listado desde collection + estado vacío "próximamente"; **páginas de detalle** con `getStaticPaths()` por idioma, render Markdown, metadata individual y retorno; feeds RSS `/rss.xml` y `/en/rss.xml` con @astrojs/rss, botón RSS enlazando al feed del idioma
+- [x] 3.8 Página Contacto (ES/EN): `contacto@jnegrete.dev` como mailto visible, links LinkedIn/GitHub/CV
+- [x] 3.9 Página 404 con diseño del sitio, noindex y enlaces de recuperación; `robots.txt` referenciando el sitemap
 
 ## 4. QA local
 
-- [ ] 4.1 `astro check` + `astro build` sin errores; enumerar rutas de `dist/` y verificar la matriz completa de URLs ES/EN + `/cv.pdf` + `404.html` + feeds + sitemap
-- [ ] 4.2 Gate anti-placeholder: búsqueda en `dist/` de frases/métricas del export original ("92%", "1.2k", "300+", "−75%", títulos de posts ficticios, "[ retrato") — cero coincidencias
-- [ ] 4.3 Verificar sitemap con alternates hreflang y canonicals correctos por página
+- [x] 4.1 `astro check` + `astro build` sin errores; enumerar rutas de `dist/` y verificar la matriz completa de URLs ES/EN + `/cv.pdf` + `404.html` + feeds + sitemap
+- [x] 4.2 Gate anti-placeholder: búsqueda en `dist/` de frases/métricas del export original ("92%", "1.2k", "300+", "−75%", títulos de posts ficticios, "[ retrato") — cero coincidencias
+- [x] 4.3 Verificar sitemap con alternates hreflang y canonicals correctos por página
 - [ ] 4.4 QA responsive y accesibilidad: 1440×900 y 390×844, menú móvil, navegación por teclado, contraste, reduced-motion
 - [ ] 4.5 Matriz de aceptación visual: screenshots por sección × idioma comparados contra `reference/` + checklist de tokens
 
@@ -50,7 +50,7 @@
 
 ## 6. Email Zoho Mail (guiado con el usuario)
 
-- [ ] 6.1 Crear `docs/zoho-dns.md`: orden exacto (verificación TXT → buzón → MX → SPF → DKIM → DMARC), dónde leer cada valor en la Zoho Admin Console, cómo aplicarlo en Cloudflare y cómo validar
+- [x] 6.1 Crear `docs/zoho-dns.md`: orden exacto (verificación TXT → buzón → MX → SPF → DKIM → DMARC), dónde leer cada valor en la Zoho Admin Console, cómo aplicarlo en Cloudflare y cómo validar
 - [ ] 6.2 Con el usuario: leer de la Admin Console los valores reales (TXT verificación, hosts MX, include SPF, selector+valor DKIM — varían por data center; NO usar genéricos) y aplicarlos en Cloudflare; asegurar SPF único (inventariar emisores; `-all` si Zoho es el único)
 - [ ] 6.3 Confirmar/crear el buzón `contacto@jnegrete.dev` en Zoho
 - [ ] 6.4 Publicar DMARC `_dmarc` con `p=none; rua=mailto:contacto@jnegrete.dev` (endurecer después según reportes)

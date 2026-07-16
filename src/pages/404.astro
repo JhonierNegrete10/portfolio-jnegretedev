@@ -1,0 +1,156 @@
+---
+/**
+ * System 404 page — a single physical file (Astro emits dist/404.html,
+ * served automatically by Vercel on static hosting; design.md Decision 7).
+ * Bilingual-neutral: not tied to a single language route, so it does not
+ * reuse Base/Topbar (which need a PageKey from the ES/EN route matrix that
+ * has no equivalent here). It reuses the same tokens/fonts and the <Head>
+ * component for SEO (noindex), split into an ES/EN pair of recovery panels.
+ */
+import '../styles/fonts.css';
+import '../styles/global.css';
+import Head from '../components/Head.astro';
+import { getUi } from '../i18n/ui';
+import { localizedPath } from '../i18n/routes';
+
+const tEs = getUi('es');
+const tEn = getUi('en');
+const homeEs = localizedPath('home', 'es');
+const homeEn = localizedPath('home', 'en');
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <Head lang="es" title={tEs.notFound.title} description={tEs.notFound.body} path="/404.html" noindex />
+  </head>
+  <body>
+    <div class="not-found">
+      <a href={homeEs} class="not-found__logo">{tEs.siteName}</a>
+      <div class="panels">
+        <div class="panel">
+          <div class="panel__eyebrow">{tEs.notFound.eyebrow}</div>
+          <h1>{tEs.notFound.title}<span class="accent">.</span></h1>
+          <p>{tEs.notFound.body}</p>
+          <a href={homeEs} class="panel__link">{tEs.notFound.backHomeEs} →</a>
+        </div>
+        <div class="panel">
+          <div class="panel__eyebrow">{tEn.notFound.eyebrow}</div>
+          <h1>{tEn.notFound.title}<span class="accent">.</span></h1>
+          <p>{tEn.notFound.body}</p>
+          <a href={homeEn} class="panel__link">{tEn.notFound.backHomeEn} →</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<style>
+  .not-found {
+    min-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .not-found__logo {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 600;
+    color: var(--color-text);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .panels {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .panel {
+    padding: 64px 32px;
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .panel:last-child {
+    border-right: none;
+  }
+
+  .panel__eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-accent);
+    margin-bottom: 18px;
+  }
+
+  .panel h1 {
+    font-family: var(--font-sans);
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin: 0 0 20px;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .accent {
+    color: var(--color-accent);
+  }
+
+  .panel p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--color-muted-soft);
+    margin: 0 0 28px;
+    max-width: 380px;
+  }
+
+  .panel__link {
+    align-self: flex-start;
+    border: 1px solid var(--color-border-strong);
+    padding: 12px 20px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text);
+    transition:
+      background-color 0.15s,
+      color 0.15s,
+      border-color 0.15s;
+  }
+
+  .panel__link:hover {
+    background: var(--color-accent);
+    color: var(--color-bg);
+    border-color: var(--color-accent);
+    opacity: 1;
+  }
+
+  @media (max-width: 1059px) {
+    .panels {
+      grid-template-columns: 1fr;
+    }
+
+    .panel {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+      padding: 48px 24px;
+    }
+
+    .panel:last-child {
+      border-bottom: none;
+    }
+
+    .panel h1 {
+      font-size: 36px;
+    }
+  }
+</style>

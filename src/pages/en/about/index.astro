@@ -1,0 +1,189 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PortraitComposition from '../../../components/PortraitComposition.astro';
+import { getUi } from '../../../i18n/ui';
+import { profile } from '../../../data/profile';
+import { experience, languages, capabilityStack } from '../../../data/experience';
+import { localizedPath } from '../../../i18n/routes';
+
+const lang = 'en' as const;
+const t = getUi(lang);
+const path = localizedPath('about', lang);
+const alternatePath = localizedPath('about', 'es');
+const statusLabel = profile.available ? t.topbar.available : t.topbar.fullyBooked;
+---
+
+<Base lang={lang} page="about" title={t.about.title} description={t.meta.home.description} path={path} alternatePath={alternatePath}>
+  <div class="about-top">
+    <div class="about-side">
+      <PortraitComposition label={t.about.portraitLabel} />
+      <div class="side-row">
+        <span class="side-row__label">{t.about.base}</span>
+        <span>{t.about.baseValue}</span>
+      </div>
+      <div class="side-row">
+        <span class="side-row__label">{t.about.languagesLabel}</span>
+        <span>{languages[lang]}</span>
+      </div>
+      <div class="side-row side-row--last">
+        <span class="side-row__label">{t.about.statusLabel}</span>
+        <span class="accent">{statusLabel}</span>
+      </div>
+    </div>
+    <div class="about-main">
+      <h2>{t.about.title}<span class="accent">.</span></h2>
+      {profile.bio.map((paragraph) => (
+        <p class="bio-p">{paragraph[lang]}</p>
+      ))}
+    </div>
+  </div>
+
+  <div class="section-label">{t.about.trackRecordLabel}</div>
+  {
+    experience.map((entry) => (
+      <div class="timeline-row">
+        <div class="timeline-row__period">{entry.period || '—'}</div>
+        <div class="timeline-row__role">
+          {entry.role[lang]} <span class="timeline-row__org">— {entry.org}</span>
+        </div>
+        <div class="timeline-row__desc">{entry.description[lang]}</div>
+      </div>
+    ))
+  }
+
+  <div class="section-label">{t.about.stackLabel}</div>
+  <div class="chips">
+    {capabilityStack.map((item) => <div class="chip">{item}</div>)}
+  </div>
+</Base>
+
+<style>
+  .about-top {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .about-side {
+    border-right: 1px solid var(--color-border);
+  }
+
+  .side-row {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+
+  .side-row--last {
+    border-bottom: none;
+  }
+
+  .side-row__label {
+    color: var(--color-muted-dim);
+  }
+
+  .accent {
+    color: var(--color-accent);
+  }
+
+  .about-main {
+    padding: 56px 24px;
+  }
+
+  .about-main h2 {
+    font-family: var(--font-sans);
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin: 0 0 28px;
+    text-transform: uppercase;
+  }
+
+  .bio-p {
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--color-muted-soft);
+    margin: 0 0 18px;
+    max-width: 560px;
+  }
+
+  .bio-p:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-label {
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted-dim);
+  }
+
+  .timeline-row {
+    display: grid;
+    grid-template-columns: 220px 1.2fr 1fr;
+    border-bottom: 1px solid var(--color-border);
+    padding: 26px 24px;
+    gap: 16px;
+    align-items: baseline;
+  }
+
+  .timeline-row__period {
+    color: var(--color-accent);
+    font-size: 13px;
+  }
+
+  .timeline-row__role {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .timeline-row__org {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-muted);
+  }
+
+  .timeline-row__desc {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--color-muted);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .chip {
+    padding: 16px 22px;
+    border-right: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1059px) {
+    .about-top {
+      grid-template-columns: 1fr;
+    }
+
+    .about-side {
+      border-right: none;
+    }
+
+    .about-main h2 {
+      font-size: 40px;
+    }
+
+    .timeline-row {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+  }
+</style>

@@ -1,0 +1,22 @@
+---
+import Base from '../../../layouts/Base.astro';
+import ProjectsContent from '../../../components/ProjectsContent.astro';
+import { getUiExtra } from '../../../i18n/ui';
+import { localizedPath } from '../../../i18n/routes';
+
+const lang = 'en' as const;
+const t = getUiExtra(lang);
+const path = localizedPath('projects', lang);
+const alternatePath = localizedPath('projects', 'es');
+---
+
+<Base
+  lang={lang}
+  page="projects"
+  title={t.meta.projects.title}
+  description={t.meta.projects.description}
+  path={path}
+  alternatePath={alternatePath}
+>
+  <ProjectsContent lang={lang} />
+</Base>

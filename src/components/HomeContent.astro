@@ -1,0 +1,299 @@
+---
+/**
+ * Home page body (task 3.3): hero + globe, skills marquee, projects table,
+ * two service teaser cards. Shared between src/pages/index.astro (ES) and
+ * src/pages/en/index.astro (EN) so the two locales never drift apart —
+ * every string/value below comes from src/i18n or src/data.
+ */
+import type { Lang } from '../i18n/routes';
+import { localizedPath } from '../i18n/routes';
+import { getUi } from '../i18n/ui';
+import { profile } from '../data/profile';
+import { projects } from '../data/projects';
+import { skills } from '../data/skills';
+import { services } from '../data/services';
+import Globe from './Globe.astro';
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = getUi(lang);
+
+const contactHref = localizedPath('contact', lang);
+const servicesHref = localizedPath('services', lang);
+const projectsHref = localizedPath('projects', lang);
+
+// Doubled so the CSS `marquee` keyframe (translateX(-50%)) loops seamlessly.
+const marqueeLoop = [...skills, ...skills];
+
+// Real step titles from the services offering, chained into a single
+// teaser line for the second home card (diagnosis -> implementation -> governance).
+const stepsSummary = services.steps.map((step) => step.title[lang]).join(' → ');
+---
+
+<section class="hero">
+  <div class="hero__intro">
+    <h1>Jhonier<br />Negrete<span class="accent">.</span></h1>
+    <p class="hero__tagline">{profile.tagline[lang]}</p>
+    <div class="hero__actions">
+      <a href={contactHref} class="btn btn--primary">{t.home.heroCta} ↗</a>
+      <a href="/cv.pdf" class="btn btn--outline">{t.home.cvButton} ↓</a>
+    </div>
+  </div>
+  <Globe lang={lang} />
+</section>
+
+<div class="marquee">
+  <span class="sr-only">{skills.join(', ')}</span>
+  <div class="marquee__track" aria-hidden="true">
+    {
+      marqueeLoop.map((item) => (
+        <Fragment>
+          <span class="marquee__item">{item}</span>
+          <span class="marquee__dot">·</span>
+        </Fragment>
+      ))
+    }
+  </div>
+</div>
+
+<div class="ptable">
+  <div class="ptable__head">
+    <div>{t.home.tableCol.no}</div>
+    <div>{t.home.tableCol.project}</div>
+    <div class="ptable__stack-col">{t.home.tableCol.stack}</div>
+    <div class="ptable__year-col">{t.home.tableCol.year}</div>
+  </div>
+  {
+    projects.map((project) => (
+      <a href={projectsHref} class="ptable__row">
+        <div>{project.no}</div>
+        <div class="ptable__title">{project.title[lang]}</div>
+        <div class="ptable__stack-col ptable__stack">{project.stack.join(' · ')}</div>
+        <div class="ptable__year-col">{project.year}</div>
+      </a>
+    ))
+  }
+</div>
+
+<div class="teasers">
+  <a href={servicesHref} class="teaser">
+    <div class="teaser__label">{t.home.servicesTeaserFor}</div>
+    <div class="teaser__title">{services.title[lang]} →</div>
+  </a>
+  <a href={servicesHref} class="teaser">
+    <div class="teaser__label">{t.services.stepsLabel}</div>
+    <div class="teaser__title">{stepsSummary} →</div>
+  </a>
+</div>
+
+<style>
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ===== Hero ===== */
+  .hero {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .hero__intro {
+    padding: 70px 24px 56px;
+    position: relative;
+    overflow: hidden;
+    background-image: radial-gradient(rgba(255, 92, 53, 0.14) 1px, transparent 1.5px);
+    background-size: 28px 28px;
+    animation: gridDrift 14s linear infinite;
+  }
+
+  .hero__intro h1 {
+    font-family: var(--font-sans);
+    font-size: 84px;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 0.96;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .accent {
+    color: var(--color-accent);
+  }
+
+  .hero__tagline {
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 32px 0 0;
+    max-width: 440px;
+    color: var(--color-muted-soft);
+  }
+
+  .hero__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 36px;
+    font-size: 13px;
+  }
+
+  .btn {
+    padding: 13px 22px;
+    font-weight: 600;
+  }
+
+  .btn--primary {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  .btn--outline {
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text);
+  }
+
+  .hero :global(.globe-cell) {
+    border-left: 1px solid var(--color-border);
+  }
+
+  /* ===== Marquee ===== */
+  .marquee {
+    border-bottom: 1px solid var(--color-border);
+    overflow: hidden;
+    padding: 13px 0;
+    white-space: nowrap;
+  }
+
+  .marquee__track {
+    display: inline-flex;
+    gap: 40px;
+    animation: marquee 18s linear infinite;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-accent);
+  }
+
+  /* ===== Projects table ===== */
+  .ptable {
+    font-size: 13px;
+  }
+
+  .ptable__head {
+    display: grid;
+    grid-template-columns: 70px 1.4fr 1fr 120px;
+    border-bottom: 1px solid var(--color-border);
+    padding: 12px 24px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted-dim);
+  }
+
+  .ptable__year-col {
+    text-align: right;
+  }
+
+  .ptable__row {
+    display: grid;
+    grid-template-columns: 70px 1.4fr 1fr 120px;
+    border-bottom: 1px solid var(--color-border);
+    padding: 20px 24px;
+    align-items: baseline;
+    color: var(--color-text);
+  }
+
+  .ptable__row:hover {
+    background: var(--color-accent);
+    color: var(--color-bg);
+    opacity: 1;
+  }
+
+  .ptable__title {
+    font-family: var(--font-sans);
+    font-size: 19px;
+    font-weight: 600;
+  }
+
+  .ptable__stack {
+    opacity: 0.6;
+  }
+
+  /* ===== Service teaser cards ===== */
+  .teasers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .teaser {
+    display: block;
+    padding: 32px 24px;
+    color: var(--color-text);
+    border-right: 1px solid var(--color-border);
+  }
+
+  .teaser:last-child {
+    border-right: none;
+  }
+
+  .teaser__label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-accent);
+    margin-bottom: 10px;
+  }
+
+  .teaser__title {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 1059px) {
+    .hero {
+      grid-template-columns: 1fr;
+    }
+
+    .hero__intro h1 {
+      font-size: 46px;
+    }
+
+    .hero :global(.globe-cell) {
+      border-left: none;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .ptable__head,
+    .ptable__row {
+      grid-template-columns: 44px 1fr 60px;
+    }
+
+    .ptable__stack-col {
+      display: none;
+    }
+
+    .teasers {
+      grid-template-columns: 1fr;
+    }
+
+    .teaser {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .teaser:last-child {
+      border-bottom: none;
+    }
+  }
+</style>

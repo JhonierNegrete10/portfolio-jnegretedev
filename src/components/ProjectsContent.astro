@@ -1,0 +1,246 @@
+---
+/**
+ * Projects page body (task 3.4): detail grid per project — number+year
+ * column | title+description+stack | verifiable facts column (role, top
+ * stack items, links to repo/live site). No invented KPIs — the reference
+ * HTML's fake metrics (92%, 1.2k, −40%...) are replaced by real fields
+ * already present on src/data/projects.ts.
+ */
+import type { Lang } from '../i18n/routes';
+import { localizedPath } from '../i18n/routes';
+import { getUi } from '../i18n/ui';
+import { projects } from '../data/projects';
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = getUi(lang);
+const contactHref = localizedPath('contact', lang);
+
+const count = `${String(projects.length).padStart(3, '0')} ${t.projects.countSuffix}`;
+
+/** Strip a trailing "↗" already baked into some link labels so we never double it up. */
+function linkLabel(label: string): string {
+  return label.replace(/\s*↗\s*$/, '');
+}
+---
+
+<div class="projects">
+  <header class="projects__header">
+    <h2 class="projects__title">{t.projects.title}<span class="accent">.</span></h2>
+    <div class="projects__count">{count}</div>
+  </header>
+
+  {
+    projects.map((project) => (
+      <article class="project-row">
+        <div class="project-row__meta">
+          <div class="project-row__no">{project.no}</div>
+          <div class="project-row__year">{project.year}</div>
+        </div>
+        <div class="project-row__body">
+          <h3 class="project-row__title">{project.title[lang]}</h3>
+          <p class="project-row__desc">{project.description[lang]}</p>
+          <div class="project-row__stack">{project.stack.join(' · ')}</div>
+        </div>
+        <div class="project-row__facts">
+          <div class="fact">
+            <span class="fact__label">{t.projects.colRole}</span>
+            <span class="fact__value">{project.role[lang]}</span>
+          </div>
+          <div class="fact">
+            <span class="fact__label">{t.projects.colStack}</span>
+            <span class="fact__value">{project.stack.slice(0, 3).join(' · ')}</span>
+          </div>
+          {project.links?.map((link) => (
+            <a class="fact fact--link" href={link.url} target="_blank" rel="noopener noreferrer">
+              <span class="fact__label">{linkLabel(link.label[lang])}</span>
+              <span class="fact__value">↗</span>
+            </a>
+          ))}
+        </div>
+      </article>
+    ))
+  }
+
+  <footer class="projects__footer">
+    <div class="projects__more">{t.projects.more}</div>
+    <a href={contactHref} class="btn btn--primary">{t.home.heroCta} ↗</a>
+  </footer>
+</div>
+
+<style>
+  .accent {
+    color: var(--color-accent);
+  }
+
+  .projects__header {
+    padding: 56px 24px 40px;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .projects__title {
+    font-family: var(--font-sans);
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .projects__count {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-muted-dim);
+  }
+
+  .project-row {
+    display: grid;
+    grid-template-columns: 160px 1.3fr 1fr;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .project-row__meta {
+    padding: 36px 24px;
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .project-row__no {
+    font-size: 28px;
+    color: var(--color-accent);
+  }
+
+  .project-row__year {
+    font-size: 11px;
+    color: var(--color-muted-dim);
+  }
+
+  .project-row__body {
+    padding: 36px 24px;
+    border-right: 1px solid var(--color-border);
+  }
+
+  .project-row__title {
+    font-family: var(--font-sans);
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 14px;
+  }
+
+  .project-row__desc {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--color-muted-soft);
+    margin: 0 0 20px;
+    max-width: 480px;
+  }
+
+  .project-row__stack {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted-dim);
+  }
+
+  .project-row__facts {
+    padding: 36px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .fact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--color-border);
+    color: var(--color-text);
+  }
+
+  .fact:last-child {
+    border-bottom: none;
+  }
+
+  .fact__label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted-dim);
+  }
+
+  .fact__value {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: right;
+  }
+
+  .fact--link:hover .fact__label,
+  .fact--link:hover .fact__value {
+    color: var(--color-accent);
+  }
+
+  .fact--link:hover {
+    opacity: 1;
+  }
+
+  .projects__footer {
+    padding: 32px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .projects__more {
+    font-size: 12px;
+    color: var(--color-muted-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .btn {
+    padding: 13px 22px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .btn--primary {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  @media (max-width: 1059px) {
+    .projects__title {
+      font-size: 34px;
+    }
+
+    .project-row {
+      grid-template-columns: 1fr;
+    }
+
+    .project-row__meta {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+      flex-direction: row;
+      justify-content: space-between;
+    }
+
+    .project-row__body {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+    }
+  }
+</style>
