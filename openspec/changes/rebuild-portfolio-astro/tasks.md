@@ -41,12 +41,12 @@
 ## 5. Repositorio y deploy
 
 - [x] 5.1 Crear repo `JhonierNegrete10/portfolio-jnegretedev` (`gh repo create --source . --push`)
-- [ ] 5.2 Crear proyecto Vercel conectado al repo GitHub (framework Astro, estático sin adaptador) y verificar deployment READY
+- [x] 5.2 Crear proyecto Vercel conectado al repo GitHub (framework Astro, estático sin adaptador) y verificar deployment READY
 - [x] 5.3 Respaldar (export) la zona DNS de Cloudflare de jnegrete.dev y documentar diff previsto (preservados vs reemplazados: apex/`www`; revisar CAA)
 - [x] 5.4 Añadir `jnegrete.dev` y `www.jnegrete.dev` al proyecto Vercel y **leer los valores DNS exactos que Vercel indique** (`vercel domains inspect`/dashboard)
 - [ ] 5.5 Aplicar exactamente esos registros en Cloudflare en modo DNS only (nube gris) y configurar redirect `www → apex` (308) en Vercel
 - [x] 5.6 Verificar: dominio válido en Vercel, TLS activo, `curl -sI` de ambos hosts (200 apex, 308 www), redirección de trailing slash
-- [ ] 5.7 Push de prueba para confirmar deploy automático en `main`
+- [x] 5.7 Push de prueba para confirmar deploy automático en `main`
 
 ## 6. Email Zoho Mail (guiado con el usuario)
 
