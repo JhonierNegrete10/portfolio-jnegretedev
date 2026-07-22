@@ -30,6 +30,7 @@
 | Descripción rol MEMBO: OCR de 10k+ PDFs, Elasticsearch, PyTorch, OpenCV | Sobre mí (timeline) | CV — detalle de responsabilidades en MEMBO |
 | Founder — FiniaERP.com, 2026 | Sobre mí (timeline), Proyectos (#002) | CV — experiencia/proyectos, entrada FiniaERP |
 | Founder — NextEraTech.top, 2026 | Sobre mí (timeline), Proyectos (#003) | CV — experiencia/proyectos, entrada NextEraTech |
+| Founder — Creativox, 2026 (en producción) | Sobre mí (timeline), Proyectos (#007) | Decisión usuario 2026-07-22, entrada Creativox |
 | Especialización en Inteligencia Artificial — EIA, 2024 (capstone TTSFlow) | Sobre mí (educación), Proyectos (#004) | CV — educación, Especialización en IA EIA |
 | Bootcamp DATAPATH | Sobre mí (educación) | CV — educación/formación complementaria, DATAPATH |
 | Ingeniería Mecatrónica — EIA, 2017–2022 | Sobre mí (educación) | CV — educación, pregrado EIA |
@@ -45,6 +46,7 @@
 | #004 TTSFlow — capstone Especialización IA EIA (2024): MMS-TTS, FastAPI, AWS Lambda, Streamlit, Docker, EC2/S3 | Home (tabla), Proyectos | CV — capstone TTSFlow; repo `github.com/JhonierNegrete10/tts-fastapi-app` (verificado: lenguaje Python, descripción "MLOps app", `api.github.com/repos/JhonierNegrete10/tts-fastapi-app`) |
 | #005 Visión artificial para video-vigilancia — INTECOL: YOLO (tracking multi-objeto en tiempo real), nubes de puntos 3D TOF; 2022–2024 | Home (tabla), Proyectos | CV — experiencia INTECOL (proyecto interno; sin repo público por confidencialidad del empleador) |
 | #006 Herramientas open source: ScrapyTube + Delta-Robot | Home (tabla), Proyectos | GitHub — repos públicos verificados vía `api.github.com` (ver detalle abajo) |
+| #007 Creativox — founder, 2026, SaaS de creativos publicitarios con IA en producción (Next.js, FastAPI, Postgres, Clerk, Polar, Cloudflare R2, Docker) | Home (tabla), Proyectos | Decisión usuario 2026-07-22 (proyecto propio en producción); enlace `https://app.creativox.jnegrete.dev` verificado en despliegue Hetzner |
 | ScrapyTube — 3★, scraping de listas de reproducción de YouTube | Proyectos (detalle #006) | `api.github.com/repos/JhonierNegrete10/ScrapyTube`: `stargazers_count: 3`, `language: "Jupyter Notebook"`, `description: "ScrapyTube es un proyecto de web scraping diseñado para extraer información específica de diferentes sitios web, como listas de reproducción de YouTube..."` |
 | Delta-Robot — 2★, robot delta 3 GDL, tesis EIA (interfaz Python + firmware ESP32) | Proyectos (detalle #006) | `api.github.com/repos/JhonierNegrete10/Delta-Robot`: `stargazers_count: 2`, `language: "Python"`, `description: "...thesis 'Diseño e implementación de un robot delta de 3 grados de libertad'...GUI made in python...logic in the embedded system (ESP32)"` |
 

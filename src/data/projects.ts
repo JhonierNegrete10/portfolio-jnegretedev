@@ -144,4 +144,23 @@ export const projects: Project[] = [
       { label: { es: 'Delta-Robot ↗', en: 'Delta-Robot ↗' }, url: 'https://github.com/JhonierNegrete10/Delta-Robot' },
     ],
   },
+  {
+    slug: 'creativox',
+    no: '007',
+    year: '2026',
+    title: {
+      es: 'Creativox',
+      en: 'Creativox',
+    },
+    role: {
+      es: 'Founder',
+      en: 'Founder',
+    },
+    description: {
+      es: 'Producto propio en producción: SaaS de generación de creativos publicitarios con IA, con autenticación, cobro por suscripción y almacenamiento en la nube.',
+      en: 'Own product in production: an AI-powered advertising-creative generation SaaS, with authentication, subscription billing, and cloud storage.',
+    },
+    stack: ['Next.js', 'FastAPI', 'Postgres', 'Clerk', 'Polar', 'Cloudflare R2', 'Docker'],
+    links: [{ label: { es: 'Sitio', en: 'Site' }, url: 'https://app.creativox.jnegrete.dev' }],
+  },
 ];

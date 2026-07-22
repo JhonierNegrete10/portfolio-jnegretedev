@@ -20,14 +20,14 @@ export const experience: ExperienceEntry[] = [
   {
     period: '2026 — presente',
     kind: 'venture',
-    org: 'FiniaERP · NextEraTech',
+    org: 'FiniaERP · NextEraTech · Creativox',
     role: {
       es: 'Founder',
       en: 'Founder',
     },
     description: {
-      es: 'Fundador de FiniaERP.com y NextEraTech.top, dos productos propios en construcción, en paralelo a mi rol en GBM Colombia.',
-      en: 'Founder of FiniaERP.com and NextEraTech.top, two own products in progress, alongside my role at GBM Colombia.',
+      es: 'Fundador de FiniaERP.com, NextEraTech.top y Creativox (SaaS de creativos publicitarios con IA, en producción), en paralelo a mi rol en GBM Colombia.',
+      en: 'Founder of FiniaERP.com, NextEraTech.top and Creativox (an AI advertising-creative SaaS, in production), alongside my role at GBM Colombia.',
     },
   },
   {
