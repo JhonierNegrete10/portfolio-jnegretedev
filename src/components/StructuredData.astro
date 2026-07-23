@@ -1,0 +1,49 @@
+---
+import type { Lang } from '../i18n/routes';
+import { profile } from '../data/profile';
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+
+const siteUrl = 'https://jnegrete.dev';
+
+const [locality, country] = profile.location.es.split(', ');
+
+const graph = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Person',
+      '@id': `${siteUrl}/#person`,
+      name: profile.name,
+      url: siteUrl,
+      email: profile.email,
+      jobTitle: profile.tagline[lang],
+      description: profile.tagline[lang],
+      sameAs: [profile.links.github.url, profile.links.linkedin.url],
+      ...(locality &&
+        country && {
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: locality,
+            addressCountry: country,
+          },
+        }),
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${siteUrl}/#website`,
+      name: `${profile.name} — Portfolio`,
+      url: siteUrl,
+      inLanguage: ['es', 'en'],
+    },
+  ],
+};
+
+const jsonLd = JSON.stringify(graph).replace(/</g, '\\u003c');
+---
+
+<script type="application/ld+json" set:html={jsonLd} />

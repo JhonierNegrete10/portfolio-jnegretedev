@@ -1,6 +1,7 @@
 ---
 import type { Lang } from '../i18n/routes';
 import { profile } from '../data/profile';
+import StructuredData from './StructuredData.astro';
 
 export interface Props {
   lang: Lang;
@@ -70,6 +71,8 @@ const fullTitle = `${title} — ${profile.name}`;
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
 <meta name="generator" content={Astro.generator} />
+
+<StructuredData lang={lang} />
 
 <!-- Vercel Web Analytics + Speed Insights (script HTML para sitio estático; requieren
      estar habilitados en el dashboard del proyecto para registrar datos) -->
