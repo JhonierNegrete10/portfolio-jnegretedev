@@ -2,6 +2,7 @@
 import type { Lang } from '../i18n/routes';
 import { profile } from '../data/profile';
 import StructuredData from './StructuredData.astro';
+import Analytics from '@vercel/analytics/astro';
 
 export interface Props {
   lang: Lang;
@@ -74,11 +75,15 @@ const fullTitle = `${title} — ${profile.name}`;
 
 <StructuredData lang={lang} />
 
-<!-- Vercel Web Analytics + Speed Insights (script HTML para sitio estático; requieren
-     estar habilitados en el dashboard del proyecto para registrar datos) -->
+<!-- Vercel Web Analytics: componente oficial @vercel/analytics/astro (v1.4.0+),
+     el método canónico para Astro 5. Inyecta el script con el path ofuscado y
+     resiliente a adblockers; requiere habilitar Web Analytics en el dashboard
+     del proyecto Vercel para que /_vercel/insights/* deje de dar 404. -->
+<Analytics />
+
+<!-- Vercel Speed Insights (script HTML para sitio estático; requiere estar
+     habilitado en el dashboard del proyecto para registrar datos). -->
 <script is:inline>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
 </script>
-<script is:inline defer src="/_vercel/insights/script.js"></script>
 <script is:inline defer src="/_vercel/speed-insights/script.js"></script>
