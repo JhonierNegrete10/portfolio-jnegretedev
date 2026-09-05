@@ -42,6 +42,16 @@ export function blogPostPath(lang: Lang, slug: string): string {
   return `${routes.blog[lang]}${slug}/`;
 }
 
+/** Series hub path (pages are introduced in PR (b)). */
+export function blogSeriesPath(lang: Lang, seriesId: string): string {
+  return lang === 'es' ? `/blog/serie/${seriesId}/` : `/en/blog/series/${seriesId}/`;
+}
+
+/** Topic hub path (pages are introduced in PR (b)). */
+export function blogTopicPath(lang: Lang, tag: string): string {
+  return lang === 'es' ? `/blog/tema/${tag}/` : `/en/blog/topic/${tag}/`;
+}
+
 /** RSS feed path for a language (Decision 4 / task 3.7). */
 export function rssPath(lang: Lang): string {
   return lang === 'es' ? '/rss.xml' : '/en/rss.xml';

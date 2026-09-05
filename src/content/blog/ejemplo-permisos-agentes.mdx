@@ -1,0 +1,50 @@
+---
+title: "Permisos delimitados para agentes especializados"
+description: "Una guía práctica para definir permisos mínimos, aprobaciones humanas y trazabilidad verificable en sistemas de agentes especializados."
+date: 2026-09-02
+updated: 2026-09-04
+lang: es
+tags: [agentes, gobernanza, seguridad]
+series: kernel-agents
+seriesOrder: 1
+translationKey: ejemplo-permisos-agentes
+draft: true
+prerequisites:
+  - Un workspace de pruebas aislado
+  - Una política explícita de herramientas
+limits:
+  - No sustituye una revisión de seguridad formal
+nextStep:
+  label: "Definir la política del workspace"
+  href: "/blog/"
+---
+
+import Callout from '../../components/blog/Callout.astro';
+import Steps from '../../components/blog/Steps.astro';
+
+## Por qué empezar por los permisos
+
+Un agente especializado debe recibir solo las herramientas necesarias para su tarea y dejar evidencia de cada operación sensible.
+
+<Callout type="aviso" title="Aprobación humana">
+  Los cambios con impacto externo necesitan una decisión explícita de una persona responsable.
+</Callout>
+
+## Secuencia mínima
+
+<Steps>
+  <li>Declara las rutas que el agente puede leer.</li>
+  <li>Separa las escrituras reversibles de las operaciones externas.</li>
+  <li>Registra actor, propósito y resultado de cada aprobación.</li>
+</Steps>
+
+```yaml title="workspace-policy.yaml" useDiffSyntax
+workspace: kernel-agents
+-write: unrestricted
++write: approval-required
+audit: immutable
+```
+
+## Resultado esperado
+
+La política se puede revisar antes de ejecutar y el historial permite reconstruir por qué se autorizó cada cambio.

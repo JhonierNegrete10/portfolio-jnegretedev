@@ -91,6 +91,7 @@ export const ui = {
       rss: 'RSS ↗',
       backToList: '← Volver al blog',
       publishedOn: 'Publicado el',
+      updatedOn: 'Última actualización',
     },
 
     contact: {
@@ -200,6 +201,7 @@ export const ui = {
       rss: 'RSS ↗',
       backToList: '← Back to blog',
       publishedOn: 'Published on',
+      updatedOn: 'Last updated',
     },
 
     contact: {
