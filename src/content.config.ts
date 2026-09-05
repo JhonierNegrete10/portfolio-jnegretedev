@@ -14,7 +14,13 @@ function assertFlatBlogContent(directory: string, relativeDirectory = ''): void 
     const filesBySlug = new Map<string, string[]>();
     for (const entry of entries) {
       if (!entry.isFile() || !/\.mdx?$/i.test(entry.name)) continue;
-      const slug = entry.name.replace(/\.mdx?$/i, '');
+      if (!/\.mdx?$/.test(entry.name)) {
+        throw new Error(
+          `Blog content file "src/content/blog/${entry.name}" violates the lowercase-extension rule: use .md or .mdx (the loader is case-sensitive and would silently skip this post).`,
+        );
+      }
+      if (entry.name.startsWith('_')) continue; // fixtures excluded by the loader
+      const slug = entry.name.replace(/\.mdx?$/, '');
       const files = filesBySlug.get(slug) ?? [];
       files.push(`src/content/blog/${entry.name}`);
       filesBySlug.set(slug, files);

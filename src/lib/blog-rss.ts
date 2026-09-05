@@ -39,7 +39,11 @@ function escapeHtml(value: string): string {
 }
 
 function plainExpressiveCode(html: string): string {
-  return html.replace(/<figure\b[^>]*>[\s\S]*?<\/figure>/gi, (figure) => {
+  // Expressive Code stores the raw code in data-code="..." with only quotes escaped, so a
+  // literal "</figure>" inside a code block would end the figure match early. Strip the
+  // attribute first (its value cannot contain a double quote by construction).
+  const withoutDataCode = html.replace(/\sdata-code="[^"]*"/gi, '');
+  return withoutDataCode.replace(/<figure\b[^>]*>[\s\S]*?<\/figure>/gi, (figure) => {
     const caption = figure.match(/<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>/i)?.[1];
     const title = caption ? textContent(caption).trim() : '';
     const lineStarts = [...figure.matchAll(/<div\b[^>]*class=["']([^"']*\bec-line\b[^"']*)["'][^>]*>/gi)];
@@ -52,7 +56,7 @@ function plainExpressiveCode(html: string): string {
         lineHtml.match(/<div\b[^>]*class=["'][^"']*\bcode\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] ?? '';
       const classes = line[1].split(/\s+/);
       const marker = classes.includes('del') ? '- ' : classes.includes('ins') ? '+ ' : '';
-      return `${marker}${textContent(codeHtml)}`;
+      return `${marker}${textContent(codeHtml)}`.trimEnd();
     });
     const titleHtml = title ? `<p><strong>${escapeHtml(title)}</strong></p>` : '';
     return `${titleHtml}<pre><code>${escapeHtml(lines.join('\n'))}</code></pre>`;
