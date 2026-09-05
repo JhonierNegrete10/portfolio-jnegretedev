@@ -14,21 +14,25 @@ export async function GET(context: APIContext) {
   const t = getUi('en');
   const posts = await getPublishedPosts('en');
   const container = await createRssContainer();
+  const site = context.site ?? new URL('https://jnegrete.dev');
   const items = await Promise.all(
-    posts.map(async (entry) => ({
-      title: entry.data.title,
-      description: entry.data.description,
-      pubDate: entry.data.date,
-      link: blogPostPath('en', entry.id),
-      categories: entry.data.tags,
-      content: await renderRssContent(container, entry),
-    })),
+    posts.map(async (entry) => {
+      const postUrl = new URL(blogPostPath('en', entry.id), site).toString();
+      return {
+        title: entry.data.title,
+        description: entry.data.description,
+        pubDate: entry.data.date,
+        link: postUrl,
+        categories: entry.data.tags,
+        content: await renderRssContent(container, entry, postUrl),
+      };
+    }),
   );
 
   return rss({
     title: `${profile.name} — Blog`,
     description: t.meta.home.description,
-    site: context.site ?? 'https://jnegrete.dev',
+    site,
     items,
     customData: '<language>en-us</language>',
   });

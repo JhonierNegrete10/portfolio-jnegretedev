@@ -12,12 +12,12 @@
 - [x] 1.5 OG por post: `src/pages/og/[slug].png.ts` con `sharp`, estilo de `scripts/generate-og.mjs`
 - [x] 1.6 Integración `integrations/blog-sitemap.mjs` para `lastmod`; RSS con `content:encoded` en ambos idiomas
 - [x] 1.7 Filtro `draft` en producción en todas las consultas (`src/lib/blog.ts` como única función de acceso)
-- [x] 1.8 `scripts/verify-blog-artifact.mjs` + paso en `.github/workflows/ci.yml`
+- [x] 1.8 `scripts/verify-blog-artifact.mjs` + paso en `.github/workflows/ci.yml` (canonical, JSON-LD BlogPosting+BreadcrumbList, og:image, hreflang, lastmod, RSS completo). **La comprobación de los 4 bloques obligatorios queda diferida a 2.2**, cuando existan los componentes
 - [x] 1.9 Post de prueba `_ejemplo-kernel-agents.mdx` (prefijo `_`, no publicado) para ejercitar todo en preview; build + verify en verde; inspección del artefacto (HTML, sitemap, RSS, OG)
 
 ## 2. PR (b): pantallas según maqueta elegida
-- [ ] 2.1 Rutas en `routes.ts` (serie/tema ES-EN) y páginas hub/tema con `noindex` cuando 1 post
-- [ ] 2.2 Página de post: `Breadcrumbs`, `SeriesNav`, `NextStep`, `LimitsBox`, índice, lectura, según maqueta
+- [ ] 2.1 Rutas en `routes.ts` (serie/tema ES-EN) y páginas hub/tema con `noindex` cuando 1 post; poner `seriesHubPagesPublished = true` en `src/data/series.ts` para que JSON-LD emita `isPartOf` y la miga de serie
+- [ ] 2.2 Página de post: `Breadcrumbs`, `SeriesNav`, `NextStep`, `LimitsBox`, índice, lectura, según maqueta; añadir al verificador la regla de los 4 bloques obligatorios (diferida desde 1.8)
 - [ ] 2.3 Índice del blog: paginación, serie por fila, filtros/chips según maqueta; EN en paridad
 - [ ] 2.4 Capturas con post real a 1440/390 (sin scroll horizontal) → revisión de legibilidad; "después" al Hub
 

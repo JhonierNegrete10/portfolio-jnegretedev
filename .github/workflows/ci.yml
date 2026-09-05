@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -34,3 +34,6 @@ jobs:
 
       - name: Verify blog artifact
         run: npm run verify:blog
+
+      - name: Build & verify with draft posts
+        run: BLOG_INCLUDE_DRAFTS=1 npm run build && BLOG_INCLUDE_DRAFTS=1 npm run verify:blog

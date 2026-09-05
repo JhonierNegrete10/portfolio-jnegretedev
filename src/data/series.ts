@@ -4,6 +4,9 @@ export interface SeriesDefinition {
   baseGuideSlug?: { es?: string; en?: string };
 }
 
+// flip to true in task 2.1 when /blog/serie/<id>/ pages exist
+export const seriesHubPagesPublished = false;
+
 export const series: Record<string, SeriesDefinition> = {
   'kernel-agents': {
     title: { es: 'Kernel Agents', en: 'Kernel Agents' },

@@ -9,14 +9,16 @@ import { getSeries } from '../../data/series';
 export async function getStaticPaths() {
   const esPosts = await getPublishedPosts('es');
 
-  return Promise.all(esPosts.map(async (entry) => {
-    const translated = await getTranslation(entry);
+  return Promise.all(
+    esPosts.map(async (entry) => {
+      const translated = await getTranslation(entry);
 
-    return {
-      params: { slug: entry.id },
-      props: { entry, translatedSlug: translated?.id },
-    };
-  }));
+      return {
+        params: { slug: entry.id },
+        props: { entry, translatedSlug: translated?.id },
+      };
+    }),
+  );
 }
 
 export interface Props {
@@ -44,6 +46,8 @@ const article = {
   modifiedTime: entry.data.updated ?? entry.data.date,
   tags: entry.data.tags,
   ogImage: ogImagePath,
+  ogImageWidth: entry.data.cover?.src.width,
+  ogImageHeight: entry.data.cover?.src.height,
   canonicalOverride: entry.data.canonical,
 };
 const post = {
@@ -56,7 +60,8 @@ const post = {
   lang,
   tags: entry.data.tags,
   image: imageUrl,
-  ...(entry.data.series && seriesDefinition && { series: { id: entry.data.series, name: seriesDefinition.title[lang] } }),
+  ...(entry.data.series &&
+    seriesDefinition && { series: { id: entry.data.series, name: seriesDefinition.title[lang] } }),
 };
 ---
 
@@ -77,7 +82,13 @@ const post = {
     <h1>{entry.data.title}</h1>
     <div class="post__meta">
       <span>{t.blog.publishedOn} {dateLabel}</span>
-      {updatedLabel && <span>{t.blog.updatedOn} {updatedLabel}</span>}
+      {
+        updatedLabel && (
+          <span>
+            {t.blog.updatedOn} {updatedLabel}
+          </span>
+        )
+      }
       {entry.data.tags.length > 0 && <span class="post__tags">{entry.data.tags.join(' · ')}</span>}
     </div>
     <div class="post__body">

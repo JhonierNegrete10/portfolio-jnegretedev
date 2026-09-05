@@ -5,6 +5,8 @@ export interface ArticleMetadata {
   modifiedTime: Date;
   tags: string[];
   ogImage: string;
+  ogImageWidth?: number;
+  ogImageHeight?: number;
   canonicalOverride?: string;
 }
 

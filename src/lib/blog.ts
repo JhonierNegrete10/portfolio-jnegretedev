@@ -1,16 +1,13 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import type { Lang } from '../i18n/routes';
+import { includeDrafts } from './build-flags';
 
 export type BlogEntry = CollectionEntry<'blog'>;
-
-function includesDrafts(): boolean {
-  return !import.meta.env.PROD || import.meta.env.BLOG_INCLUDE_DRAFTS === '1';
-}
 
 export async function getPublishedPosts(lang: Lang): Promise<BlogEntry[]> {
   const posts = await getCollection('blog', (entry) => entry.data.lang === lang);
   return posts
-    .filter((entry) => includesDrafts() || !entry.data.draft)
+    .filter((entry) => includeDrafts() || !entry.data.draft)
     .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 }
 

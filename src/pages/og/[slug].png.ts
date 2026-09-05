@@ -46,18 +46,9 @@ function wrapTitle(title: string): string[] {
 }
 
 export async function getStaticPaths() {
-  const entries = [...(await getPublishedPosts('es')), ...(await getPublishedPosts('en'))];
-  const slugs = new Map<string, BlogEntry>();
-
-  for (const entry of entries) {
-    const existing = slugs.get(entry.id);
-    if (existing) {
-      throw new Error(
-        `Duplicate blog slug "${entry.id}" in ${existing.filePath ?? existing.id} and ${entry.filePath ?? entry.id}. Blog slugs must be unique across languages for /og/[slug].png.`,
-      );
-    }
-    slugs.set(entry.id, entry);
-  }
+  const entries = [...(await getPublishedPosts('es')), ...(await getPublishedPosts('en'))].filter(
+    (entry) => !entry.data.cover,
+  );
 
   return entries.map((entry) => ({
     params: { slug: entry.id },

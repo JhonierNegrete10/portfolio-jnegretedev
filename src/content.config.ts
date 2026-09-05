@@ -8,7 +8,28 @@ import { series } from './data/series';
 const BLOG_DIRECTORY = fileURLToPath(new URL('./content/blog/', import.meta.url));
 
 function assertFlatBlogContent(directory: string, relativeDirectory = ''): void {
-  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+  const entries = readdirSync(directory, { withFileTypes: true });
+
+  if (!relativeDirectory) {
+    const filesBySlug = new Map<string, string[]>();
+    for (const entry of entries) {
+      if (!entry.isFile() || !/\.mdx?$/i.test(entry.name)) continue;
+      const slug = entry.name.replace(/\.mdx?$/i, '');
+      const files = filesBySlug.get(slug) ?? [];
+      files.push(`src/content/blog/${entry.name}`);
+      filesBySlug.set(slug, files);
+    }
+
+    for (const files of filesBySlug.values()) {
+      if (files.length > 1) {
+        throw new Error(
+          `Blog content files ${files.map((file) => `"${file}"`).join(' and ')} violate the unique-slug rule: top-level .md and .mdx filenames must not share a basename.`,
+        );
+      }
+    }
+  }
+
+  for (const entry of entries) {
     const relativePath = path.posix.join(relativeDirectory, entry.name);
     const absolutePath = path.join(directory, entry.name);
 
@@ -93,6 +114,10 @@ const blog = defineCollection({
       .refine((data) => data.series === undefined || Object.hasOwn(series, data.series), {
         message: 'series must reference an id declared in src/data/series.ts',
         path: ['series'],
+      })
+      .refine((data) => !data.updated || data.updated >= data.date, {
+        message: 'updated must not be earlier than date',
+        path: ['updated'],
       }),
 });
 

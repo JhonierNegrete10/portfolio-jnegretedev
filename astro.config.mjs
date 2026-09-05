@@ -17,9 +17,6 @@ export default defineConfig({
   build: {
     format: 'directory',
   },
-  vite: {
-    envPrefix: ['PUBLIC_', 'BLOG_'],
-  },
   i18n: {
     locales: ['es', 'en'],
     defaultLocale: 'es',
