@@ -28,11 +28,10 @@
    endpoint estático `src/pages/og/[slug].png.ts`; sin servicios externos.
 7. **RSS** con `content` renderizado (`@astrojs/rss` + `sanitize-html`/`markdown-it` ya recomendados
    por Astro) y `<link rel="alternate" type="application/rss+xml">` por idioma en `Head`.
-8. **Sitemap**: `lastmod` por URL en `serialize()` a partir de un mapa slug → fecha construido en
-   `astro.config.mjs` con `getCollection` no disponible → se genera `src/data/blog-lastmod.json`
-   en un paso `prebuild`, o se usa el `lastmod` de `@astrojs/sitemap` por entrada desde un
-   integración propia. Se elige la integración propia (`integrations/blog-sitemap.mjs`) que lee el
-   frontmatter con `gray-matter` en `astro:config:setup`.
+8. **Sitemap**: `lastmod` solo donde es veraz. Posts: `updated ?? date`; índices del blog: máximo de sus
+   posts; páginas estáticas: sin `lastmod` (la hora del build cambiaría en cada deploy y Google descuenta
+   los `lastmod` poco fiables). Lo implementa `integrations/blog-sitemap.mjs`, que lee el frontmatter
+   con `gray-matter` en `astro:config:setup`.
 9. **`bip-blog-sync` vive en este repo** (`tools/bip-blog-sync/`, Python 3.12 stdlib + PyYAML), con
    su unidad systemd de usuario y timer; así un cambio de schema y su mapeo van en el mismo PR. Valida
    **construyendo** (`astro check && astro build` en un checkout limpio) en vez de duplicar el zod.

@@ -1,0 +1,48 @@
+---
+export interface Props {
+  type: 'nota' | 'aviso' | 'limite';
+  title?: string;
+}
+
+const { type, title } = Astro.props;
+---
+
+<aside class:list={['callout', `callout--${type}`]} aria-label={title ?? type}>
+  {title && <div class="callout__title">{title}</div>}
+  <div class="callout__body"><slot /></div>
+</aside>
+
+<style>
+  .callout {
+    margin: 28px 0;
+    padding: 18px 20px;
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 5%, var(--color-bg));
+  }
+
+  .callout--aviso {
+    border-left-color: var(--color-muted);
+  }
+
+  .callout--limite {
+    border-left-style: dashed;
+  }
+
+  .callout__title {
+    margin-bottom: 8px;
+    color: var(--color-text);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .callout__body :global(> :first-child) {
+    margin-top: 0;
+  }
+
+  .callout__body :global(> :last-child) {
+    margin-bottom: 0;
+  }
+</style>

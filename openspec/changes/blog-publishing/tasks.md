@@ -5,15 +5,15 @@
 - [ ] 0.2 Confirmar en Vercel que los PRs generan preview (ya observado en PR #1–#3)
 
 ## 1. PR (a): modelo de contenido + SEO (no depende de la maqueta)
-- [ ] 1.1 Schema ampliado en `src/content.config.ts` (campos, rangos, `series`⇔`seriesOrder`), loader plano `*.{md,mdx}`, guardia de subcarpetas con mensaje claro
-- [ ] 1.2 `@astrojs/mdx` + `astro-expressive-code` (tema acorde a tokens, números de línea, diff, título); componentes `Callout`, `Steps`
-- [ ] 1.3 `src/data/series.ts` (ES/EN) y validación de serie declarada
-- [ ] 1.4 `Head.astro`: variante artículo (`og:type`, `article:*`, canonical override, RSS autodiscovery); `StructuredData.astro`: `BlogPosting` + `BreadcrumbList`
-- [ ] 1.5 OG por post: `src/pages/og/[slug].png.ts` con `sharp`, estilo de `scripts/generate-og.mjs`
-- [ ] 1.6 Integración `integrations/blog-sitemap.mjs` para `lastmod`; RSS con `content:encoded` en ambos idiomas
-- [ ] 1.7 Filtro `draft` en producción en todas las consultas (`src/lib/blog.ts` como única función de acceso)
-- [ ] 1.8 `scripts/verify-blog-artifact.mjs` + paso en `.github/workflows/ci.yml`
-- [ ] 1.9 Post de prueba `_ejemplo-kernel-agents.mdx` (prefijo `_`, no publicado) para ejercitar todo en preview; build + verify en verde; inspección del artefacto (HTML, sitemap, RSS, OG)
+- [x] 1.1 Schema ampliado en `src/content.config.ts` (campos, rangos, `series`⇔`seriesOrder`), loader plano `*.{md,mdx}`, guardia de subcarpetas con mensaje claro
+- [x] 1.2 `@astrojs/mdx` + `astro-expressive-code` (tema acorde a tokens, números de línea, diff, título); componentes `Callout`, `Steps`
+- [x] 1.3 `src/data/series.ts` (ES/EN) y validación de serie declarada
+- [x] 1.4 `Head.astro`: variante artículo (`og:type`, `article:*`, canonical override, RSS autodiscovery); `StructuredData.astro`: `BlogPosting` + `BreadcrumbList`
+- [x] 1.5 OG por post: `src/pages/og/[slug].png.ts` con `sharp`, estilo de `scripts/generate-og.mjs`
+- [x] 1.6 Integración `integrations/blog-sitemap.mjs` para `lastmod`; RSS con `content:encoded` en ambos idiomas
+- [x] 1.7 Filtro `draft` en producción en todas las consultas (`src/lib/blog.ts` como única función de acceso)
+- [x] 1.8 `scripts/verify-blog-artifact.mjs` + paso en `.github/workflows/ci.yml`
+- [x] 1.9 Post de prueba `_ejemplo-kernel-agents.mdx` (prefijo `_`, no publicado) para ejercitar todo en preview; build + verify en verde; inspección del artefacto (HTML, sitemap, RSS, OG)
 
 ## 2. PR (b): pantallas según maqueta elegida
 - [ ] 2.1 Rutas en `routes.ts` (serie/tema ES-EN) y páginas hub/tema con `noindex` cuando 1 post

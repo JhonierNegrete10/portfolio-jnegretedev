@@ -17,14 +17,14 @@ Cada post SHALL tener `og:image` propia (1200×630) generada en build en `/og/<s
 - **THEN** existe `dist/og/<slug>.png` y el HTML lo referencia
 
 ### Requirement: Sitemap, RSS y descubrimiento
-El sitemap SHALL incluir `lastmod` por URL (`updated ?? date` en posts; fecha del build en páginas estáticas), los feeds SHALL incluir el contenido completo (`content:encoded`) y `<head>` SHALL anunciar el feed del idioma con `rel="alternate" type="application/rss+xml"`. Las páginas de tema con un solo post SHALL llevar `noindex`.
+El sitemap SHALL incluir `lastmod` solo donde sea veraz: en cada post (`updated ?? date`) y en los índices del blog (hub, temas, listado) como el máximo de sus posts; las páginas estáticas MUST NOT llevar `lastmod` (una fecha de build cambiaría en cada deploy sin cambio de contenido), los feeds SHALL incluir el contenido completo (`content:encoded`) y `<head>` SHALL anunciar el feed del idioma con `rel="alternate" type="application/rss+xml"`. Las páginas de tema con un solo post SHALL llevar `noindex`.
 
 #### Scenario: lastmod
 - **WHEN** un post tiene `updated: 2026-09-20`
 - **THEN** su `<url>` en `sitemap-0.xml` tiene `<lastmod>2026-09-20`
 
 ### Requirement: Verificación del artefacto en CI
-CI SHALL ejecutar, tras el build, `scripts/verify-blog-artifact.mjs`, que falla si algún post construido carece de canonical, `BlogPosting`, hreflang recíproco cuando hay traducción, `og:image` existente, o alguno de los cuatro bloques obligatorios; y si el sitemap tiene URLs sin `lastmod`.
+CI SHALL ejecutar, tras el build, `scripts/verify-blog-artifact.mjs`, que falla si algún post construido carece de canonical, `BlogPosting`, hreflang recíproco cuando hay traducción, `og:image` existente, o alguno de los cuatro bloques obligatorios; si alguna URL de post o índice del blog carece de `lastmod`; o si algún ítem de RSS carece de contenido completo.
 
 #### Scenario: Post sin siguiente paso
 - **WHEN** el HTML de un post no contiene el enlace de siguiente paso

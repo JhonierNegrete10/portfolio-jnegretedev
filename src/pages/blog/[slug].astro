@@ -1,27 +1,26 @@
 ---
-import { getCollection, render, type CollectionEntry } from 'astro:content';
+import { render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import { getUi } from '../../i18n/ui';
 import { blogIndexPath, blogPostPath } from '../../i18n/routes';
+import { getPublishedPosts, getTranslation, type BlogEntry } from '../../lib/blog';
+import { getSeries } from '../../data/series';
 
 export async function getStaticPaths() {
-  const esPosts = await getCollection('blog', (entry) => entry.data.lang === 'es');
-  const enPosts = await getCollection('blog', (entry) => entry.data.lang === 'en');
+  const esPosts = await getPublishedPosts('es');
 
-  return esPosts.map((entry) => {
-    const translated = entry.data.translationKey
-      ? enPosts.find((p) => p.data.translationKey === entry.data.translationKey)
-      : undefined;
+  return Promise.all(esPosts.map(async (entry) => {
+    const translated = await getTranslation(entry);
 
     return {
       params: { slug: entry.id },
       props: { entry, translatedSlug: translated?.id },
     };
-  });
+  }));
 }
 
 export interface Props {
-  entry: CollectionEntry<'blog'>;
+  entry: BlogEntry;
   translatedSlug?: string;
 }
 
@@ -33,6 +32,32 @@ const t = getUi(lang);
 const path = blogPostPath(lang, entry.id);
 const alternatePath = translatedSlug ? blogPostPath('en', translatedSlug) : undefined;
 const dateLabel = entry.data.date.toISOString().slice(0, 10);
+const updatedLabel = entry.data.updated?.toISOString().slice(0, 10);
+const siteUrl = Astro.site ?? new URL('https://jnegrete.dev');
+const ownUrl = new URL(path, siteUrl).toString();
+const ogImagePath = entry.data.cover?.src.src ?? `/og/${entry.id}.png`;
+const imageUrl = new URL(ogImagePath, siteUrl).toString();
+const canonical = entry.data.canonical ?? ownUrl;
+const seriesDefinition = entry.data.series ? getSeries(entry.data.series) : undefined;
+const article = {
+  publishedTime: entry.data.date,
+  modifiedTime: entry.data.updated ?? entry.data.date,
+  tags: entry.data.tags,
+  ogImage: ogImagePath,
+  canonicalOverride: entry.data.canonical,
+};
+const post = {
+  url: ownUrl,
+  canonical,
+  title: entry.data.title,
+  description: entry.data.description,
+  publishedTime: entry.data.date,
+  modifiedTime: entry.data.updated ?? entry.data.date,
+  lang,
+  tags: entry.data.tags,
+  image: imageUrl,
+  ...(entry.data.series && seriesDefinition && { series: { id: entry.data.series, name: seriesDefinition.title[lang] } }),
+};
 ---
 
 <Base
@@ -44,12 +69,15 @@ const dateLabel = entry.data.date.toISOString().slice(0, 10);
   alternatePath={alternatePath}
   isBlogPost
   translatedSlug={translatedSlug}
+  article={article}
+  post={post}
 >
   <article class="post">
     <a href={blogIndexPath(lang)} class="back-link">{t.blog.backToList}</a>
     <h1>{entry.data.title}</h1>
     <div class="post__meta">
       <span>{t.blog.publishedOn} {dateLabel}</span>
+      {updatedLabel && <span>{t.blog.updatedOn} {updatedLabel}</span>}
       {entry.data.tags.length > 0 && <span class="post__tags">{entry.data.tags.join(' · ')}</span>}
     </div>
     <div class="post__body">
