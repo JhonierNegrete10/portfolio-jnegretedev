@@ -1,4 +1,4 @@
-import type { Lang } from "../i18n/routes";
+import type { Lang } from '../i18n/routes';
 
 export interface ArticleMetadata {
   publishedTime: Date;

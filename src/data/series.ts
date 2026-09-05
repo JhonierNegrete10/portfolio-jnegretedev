@@ -5,11 +5,11 @@ export interface SeriesDefinition {
 }
 
 export const series: Record<string, SeriesDefinition> = {
-  "kernel-agents": {
-    title: { es: "Kernel Agents", en: "Kernel Agents" },
+  'kernel-agents': {
+    title: { es: 'Kernel Agents', en: 'Kernel Agents' },
     description: {
-      es: "Como construyo un sistema de agentes especializados con permisos delimitados, trazabilidad y aprobacion humana.",
-      en: "How I build a system of specialized agents with bounded permissions, traceability, and human approval.",
+      es: 'Como construyo un sistema de agentes especializados con permisos delimitados, trazabilidad y aprobacion humana.',
+      en: 'How I build a system of specialized agents with bounded permissions, traceability, and human approval.',
     },
   },
 };
@@ -17,9 +17,7 @@ export const series: Record<string, SeriesDefinition> = {
 export function getSeries(id: string): SeriesDefinition {
   const definition = series[id];
   if (!definition) {
-    throw new Error(
-      `Unknown blog series "${id}". Declare it in src/data/series.ts.`,
-    );
+    throw new Error(`Unknown blog series "${id}". Declare it in src/data/series.ts.`);
   }
   return definition;
 }

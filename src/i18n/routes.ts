@@ -6,26 +6,25 @@
  * equivalent up here so ES and EN can diverge (e.g. /proyectos/ vs /en/projects/).
  */
 
-export type Lang = "es" | "en";
+export type Lang = 'es' | 'en';
 
-export const LOCALES: Lang[] = ["es", "en"];
-export const DEFAULT_LOCALE: Lang = "es";
+export const LOCALES: Lang[] = ['es', 'en'];
+export const DEFAULT_LOCALE: Lang = 'es';
 
-export type PageKey =
-  "home" | "projects" | "services" | "about" | "blog" | "contact";
+export type PageKey = 'home' | 'projects' | 'services' | 'about' | 'blog' | 'contact';
 
 /** Physical, trailing-slash-terminated route per page key and language. */
 export const routes: Record<PageKey, Record<Lang, string>> = {
-  home: { es: "/", en: "/en/" },
-  projects: { es: "/proyectos/", en: "/en/projects/" },
-  services: { es: "/servicios/", en: "/en/services/" },
-  about: { es: "/sobre-mi/", en: "/en/about/" },
-  blog: { es: "/blog/", en: "/en/blog/" },
-  contact: { es: "/contacto/", en: "/en/contact/" },
+  home: { es: '/', en: '/en/' },
+  projects: { es: '/proyectos/', en: '/en/projects/' },
+  services: { es: '/servicios/', en: '/en/services/' },
+  about: { es: '/sobre-mi/', en: '/en/about/' },
+  blog: { es: '/blog/', en: '/en/blog/' },
+  contact: { es: '/contacto/', en: '/en/contact/' },
 };
 
 export function otherLang(lang: Lang): Lang {
-  return lang === "es" ? "en" : "es";
+  return lang === 'es' ? 'en' : 'es';
 }
 
 /** Absolute path (with trailing slash) for a static page key in a given language. */
@@ -45,19 +44,17 @@ export function blogPostPath(lang: Lang, slug: string): string {
 
 /** Series hub path (pages are introduced in PR (b)). */
 export function blogSeriesPath(lang: Lang, seriesId: string): string {
-  return lang === "es"
-    ? `/blog/serie/${seriesId}/`
-    : `/en/blog/series/${seriesId}/`;
+  return lang === 'es' ? `/blog/serie/${seriesId}/` : `/en/blog/series/${seriesId}/`;
 }
 
 /** Topic hub path (pages are introduced in PR (b)). */
 export function blogTopicPath(lang: Lang, tag: string): string {
-  return lang === "es" ? `/blog/tema/${tag}/` : `/en/blog/topic/${tag}/`;
+  return lang === 'es' ? `/blog/tema/${tag}/` : `/en/blog/topic/${tag}/`;
 }
 
 /** RSS feed path for a language (Decision 4 / task 3.7). */
 export function rssPath(lang: Lang): string {
-  return lang === "es" ? "/rss.xml" : "/en/rss.xml";
+  return lang === 'es' ? '/rss.xml' : '/en/rss.xml';
 }
 
 interface LangToggleOptions {
@@ -81,18 +78,11 @@ interface LangToggleOptions {
  * Blog posts without a translation fall back to the other language's blog
  * index — defined behavior, never a broken link.
  */
-export function getLangToggleHref({
-  lang,
-  page,
-  translatedSlug,
-  isBlogPost,
-}: LangToggleOptions): string {
+export function getLangToggleHref({ lang, page, translatedSlug, isBlogPost }: LangToggleOptions): string {
   const target = otherLang(lang);
 
-  if (page === "blog" && isBlogPost) {
-    return translatedSlug
-      ? blogPostPath(target, translatedSlug)
-      : blogIndexPath(target);
+  if (page === 'blog' && isBlogPost) {
+    return translatedSlug ? blogPostPath(target, translatedSlug) : blogIndexPath(target);
   }
 
   return localizedPath(page, target);

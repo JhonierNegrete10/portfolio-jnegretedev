@@ -1,22 +1,22 @@
-import type { APIRoute } from "astro";
-import sharp from "sharp";
-import { getPublishedPosts, type BlogEntry } from "../../lib/blog";
-import { getSeries } from "../../data/series";
+import type { APIRoute } from 'astro';
+import sharp from 'sharp';
+import { getPublishedPosts, type BlogEntry } from '../../lib/blog';
+import { getSeries } from '../../data/series';
 
-const BG = "#141416";
-const ACCENT = "#ff5c35";
-const TEXT = "#ececea";
-const MUTED = "#9a9a96";
-const BORDER = "#2e2e30";
+const BG = '#141416';
+const ACCENT = '#ff5c35';
+const TEXT = '#ececea';
+const MUTED = '#9a9a96';
+const BORDER = '#2e2e30';
 
 function escapeXml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => {
     const entities: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&apos;",
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&apos;',
     };
     return entities[character];
   });
@@ -28,10 +28,7 @@ function wrapTitle(title: string): string[] {
 
   for (const word of words) {
     const current = lines.at(-1);
-    if (
-      !current ||
-      (current.length + word.length + 1 > 30 && lines.length < 3)
-    ) {
+    if (!current || (current.length + word.length + 1 > 30 && lines.length < 3)) {
       lines.push(word);
     } else {
       lines[lines.length - 1] = `${current} ${word}`;
@@ -39,7 +36,7 @@ function wrapTitle(title: string): string[] {
   }
 
   if (lines.length > 3) {
-    const remainder = lines.splice(2).join(" ");
+    const remainder = lines.splice(2).join(' ');
     lines[2] = `${remainder.slice(0, 29).trimEnd()}…`;
   } else if (lines[2]?.length > 34) {
     lines[2] = `${lines[2].slice(0, 33).trimEnd()}…`;
@@ -49,10 +46,7 @@ function wrapTitle(title: string): string[] {
 }
 
 export async function getStaticPaths() {
-  const entries = [
-    ...(await getPublishedPosts("es")),
-    ...(await getPublishedPosts("en")),
-  ];
+  const entries = [...(await getPublishedPosts('es')), ...(await getPublishedPosts('en'))];
   const slugs = new Map<string, BlogEntry>();
 
   for (const entry of entries) {
@@ -74,16 +68,14 @@ export async function getStaticPaths() {
 export const GET: APIRoute<{ entry: BlogEntry }> = async ({ props }) => {
   const { entry } = props;
   const lines = wrapTitle(entry.data.title);
-  const seriesLabel = entry.data.series
-    ? getSeries(entry.data.series).title[entry.data.lang]
-    : "BLOG";
+  const seriesLabel = entry.data.series ? getSeries(entry.data.series).title[entry.data.lang] : 'BLOG';
   const date = entry.data.date.toISOString().slice(0, 10);
   const title = lines
     .map(
       (line, index) =>
         `<text x="64" y="${230 + index * 90}" font-family="'Archivo', Arial, sans-serif" font-size="76" font-weight="700" letter-spacing="-2" fill="${TEXT}">${escapeXml(line)}</text>`,
     )
-    .join("\n");
+    .join('\n');
 
   const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
@@ -107,8 +99,8 @@ export const GET: APIRoute<{ entry: BlogEntry }> = async ({ props }) => {
   const png = await sharp(Buffer.from(svg)).png().toBuffer();
   return new Response(new Uint8Array(png), {
     headers: {
-      "Content-Type": "image/png",
-      "Cache-Control": "public, max-age=31536000, immutable",
+      'Content-Type': 'image/png',
+      'Cache-Control': 'public, max-age=31536000, immutable',
     },
   });
 };
