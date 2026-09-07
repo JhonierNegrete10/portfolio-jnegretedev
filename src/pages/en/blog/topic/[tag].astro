@@ -1,0 +1,119 @@
+---
+import Base from '../../../../layouts/Base.astro';
+import { getUi } from '../../../../i18n/ui';
+import { blogIndexPath, blogPostPath, blogTopicPath } from '../../../../i18n/routes';
+import { getPostsByTag, getTagsWithCounts, readingMinutes, type BlogEntry } from '../../../../lib/blog';
+
+export async function getStaticPaths() {
+  const tags = await getTagsWithCounts('en');
+  const otherTags = new Set((await getTagsWithCounts('es')).map(({ tag }) => tag));
+  return Promise.all(
+    tags.map(async ({ tag }) => ({
+      params: { tag },
+      props: { tag, posts: await getPostsByTag(tag, 'en'), hasAlternate: otherTags.has(tag) },
+    })),
+  );
+}
+
+export interface Props {
+  tag: string;
+  posts: BlogEntry[];
+  hasAlternate: boolean;
+}
+const { tag, posts, hasAlternate } = Astro.props;
+const lang = 'en' as const;
+const t = getUi(lang);
+const path = blogTopicPath(lang, tag);
+---
+
+<Base
+  lang={lang}
+  page="blog"
+  title={`${t.blog.topicTitle}: ${tag}`}
+  description={`${t.blog.allArticles}: ${tag}`}
+  path={path}
+  alternatePath={hasAlternate ? blogTopicPath('es', tag) : undefined}
+  noindex={posts.length === 1}
+>
+  <div class="hub">
+    <a class="back" href={blogIndexPath(lang)}>← {t.blog.title}</a>
+    <p class="eyebrow">{t.blog.topicTitle}</p>
+    <h1>{tag}</h1>
+    <ol>
+      {
+        posts.map((post) => (
+          <li>
+            <>
+              <a href={blogPostPath(lang, post.id)}>{post.data.title}</a>
+              <p>{post.data.description}</p>
+              <span>
+                {post.data.date.toISOString().slice(0, 10)} · {readingMinutes(post.body)} {t.blog.readMinutes}
+              </span>
+            </>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</Base>
+
+<style>
+  .hub {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+  .back,
+  .eyebrow,
+  li span {
+    color: var(--color-muted-dim);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .eyebrow {
+    margin: 40px 0 8px;
+    color: var(--color-accent);
+  }
+  h1 {
+    margin: 0 0 36px;
+    font-family: var(--font-sans);
+    font-size: 48px;
+    text-transform: uppercase;
+  }
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 20px;
+    padding: 20px 0;
+    border-top: 1px solid var(--color-border);
+  }
+  li a {
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 600;
+  }
+  li p {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--color-muted);
+    line-height: 1.7;
+  }
+  li span {
+    white-space: nowrap;
+  }
+  @media (max-width: 600px) {
+    h1 {
+      font-size: 34px;
+    }
+    li {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

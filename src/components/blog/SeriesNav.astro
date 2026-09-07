@@ -1,0 +1,98 @@
+---
+import type { SeriesDefinition } from '../../data/series';
+import { getUi } from '../../i18n/ui';
+import { blogPostPath, type Lang } from '../../i18n/routes';
+import type { BlogEntry } from '../../lib/blog';
+
+export interface Props {
+  lang: Lang;
+  definition: SeriesDefinition;
+  posts: BlogEntry[];
+  currentSlug: string;
+}
+
+const { lang, definition, posts, currentSlug } = Astro.props;
+const t = getUi(lang);
+const baseGuideSlug = definition.baseGuideSlug?.[lang];
+---
+
+<nav class="rail-box" aria-label={t.blog.seriesNavigationAria}>
+  <h2>{t.blog.inThisSeries}</h2>
+  <ol>
+    {
+      baseGuideSlug && (
+        <li class:list={{ current: baseGuideSlug === currentSlug }}>
+          <span class="number">00</span>
+          <a href={blogPostPath(lang, baseGuideSlug)} aria-current={baseGuideSlug === currentSlug ? 'page' : undefined}>
+            {t.blog.baseGuide}
+          </a>
+        </li>
+      )
+    }
+    {
+      posts.map((post) => (
+        <li class:list={{ current: post.id === currentSlug }}>
+          <span class="number">{String(post.data.seriesOrder).padStart(2, '0')}</span>
+          <a href={blogPostPath(lang, post.id)} aria-current={post.id === currentSlug ? 'page' : undefined}>
+            {post.data.title}
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<style>
+  .rail-box {
+    border: 1px solid var(--color-border);
+    padding: 18px;
+  }
+
+  h2 {
+    margin: 0 0 12px;
+    color: var(--color-muted);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  ol {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px solid var(--color-border);
+    font-size: 12px;
+  }
+
+  li:first-child {
+    border-top: 0;
+  }
+
+  li.current {
+    margin-left: -1px;
+    padding-left: 10px;
+    border-left: 2px solid var(--color-accent);
+  }
+
+  .number {
+    flex-shrink: 0;
+    color: var(--color-muted-dim);
+  }
+
+  a {
+    color: var(--color-muted-soft);
+  }
+
+  li.current a {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+</style>

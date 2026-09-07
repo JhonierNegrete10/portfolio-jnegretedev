@@ -2,16 +2,16 @@ export interface SeriesDefinition {
   title: { es: string; en: string };
   description: { es: string; en: string };
   baseGuideSlug?: { es?: string; en?: string };
+  planned?: { es: string[]; en: string[] };
 }
 
-// flip to true in task 2.1 when /blog/serie/<id>/ pages exist
-export const seriesHubPagesPublished = false;
+export const seriesHubPagesPublished = true;
 
 export const series: Record<string, SeriesDefinition> = {
   'kernel-agents': {
     title: { es: 'Kernel Agents', en: 'Kernel Agents' },
     description: {
-      es: 'Como construyo un sistema de agentes especializados con permisos delimitados, trazabilidad y aprobacion humana.',
+      es: 'Cómo construyo un sistema de agentes especializados con permisos delimitados, trazabilidad y aprobación humana.',
       en: 'How I build a system of specialized agents with bounded permissions, traceability, and human approval.',
     },
   },

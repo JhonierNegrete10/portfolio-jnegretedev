@@ -118,6 +118,39 @@ function sitePagePath(itemUrl) {
 
 function verifyPost({ url, htmlPath }) {
   const html = readFileSync(htmlPath, 'utf8');
+
+  const previousLinks = tags(html, 'a').filter((tag) => tag.attrs.get('data-blog-block') === 'prev');
+  if (previousLinks.length < 1 || previousLinks.some((tag) => !tag.attrs.get('href'))) {
+    fail(
+      url,
+      'mandatory previous block',
+      `expected at least one linked data-blog-block="prev", found ${previousLinks.length}`,
+    );
+  }
+
+  const nextLinks = tags(html, 'a').filter((tag) => tag.attrs.get('data-blog-block') === 'next-step');
+  if (nextLinks.length !== 1 || !nextLinks[0]?.attrs.get('href')) {
+    fail(
+      url,
+      'mandatory next-step block',
+      `expected exactly one linked data-blog-block="next-step", found ${nextLinks.length}`,
+    );
+  }
+
+  const breadcrumbNavs = tags(html, 'nav').filter(
+    (tag) => tag.attrs.get('data-blog-block') === 'breadcrumbs' && tag.attrs.get('aria-label'),
+  );
+  if (breadcrumbNavs.length < 1) {
+    fail(url, 'mandatory breadcrumbs block', 'expected nav[aria-label][data-blog-block="breadcrumbs"]');
+  }
+
+  const limitsBlocks = tags(html, 'aside').filter((tag) => tag.attrs.get('data-blog-block') === 'limits');
+  if (limitsBlocks.length < 1) {
+    fail(url, 'mandatory limits block', 'expected data-blog-block="limits"');
+  } else if (!/Última actualización|Last updated/.test(html)) {
+    fail(url, 'mandatory limits updated text', 'expected "Última actualización" or "Last updated"');
+  }
+
   const canonicalLinks = tags(html, 'link').filter((tag) => tag.attrs.get('rel')?.split(/\s+/).includes('canonical'));
   if (canonicalLinks.length !== 1) {
     fail(url, 'canonical', `expected exactly one canonical link, found ${canonicalLinks.length}`);

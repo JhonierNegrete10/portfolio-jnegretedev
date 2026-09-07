@@ -53,7 +53,9 @@ Contenido en Markdown…
 
 `title` no puede estar vacío y el slug del fichero debe usar minúsculas y guiones. Si usas `series`, declara también `seriesOrder`; los identificadores disponibles viven en `src/data/series.ts`. Las imágenes pueden vivir en `src/content/blog/mi-post/`, pero esa subcarpeta no puede contener `.md` ni `.mdx`.
 
-El listado, la página del post (`/blog/mi-post/`), su imagen `/og/mi-post.png`, el sitemap y el feed RSS se generan solos. En producción los posts con `draft: true` quedan fuera de páginas, índices, sitemap, RSS y OG. Para probar deliberadamente borradores en un build local:
+Cada serie se declara en `src/data/series.ts` con título y descripción en ambos idiomas. Puede incluir una guía base por idioma (`baseGuideSlug`) y piezas todavía no publicadas mediante `planned: { es: [...], en: [...] }`; esas piezas aparecen como “Próximamente” sin enlace. Los `tags` se convierten directamente en rutas de tema, por lo que deben escribirse en minúsculas, sin espacios (usa guiones) y sin traducirlos silenciosamente al construir la URL.
+
+El listado paginado, la página del post (`/blog/mi-post/`), los hubs de serie y tema, su imagen `/og/mi-post.png`, el sitemap y el feed RSS se generan solos. En producción los posts con `draft: true` quedan fuera de páginas, índices, sitemap, RSS y OG. Para probar deliberadamente borradores en un build local:
 
 ```bash
 BLOG_INCLUDE_DRAFTS=1 npm run build

@@ -1,23 +1,23 @@
 ---
 import { render } from 'astro:content';
 import Base from '../../../layouts/Base.astro';
-import { getUi } from '../../../i18n/ui';
-import { blogIndexPath, blogPostPath } from '../../../i18n/routes';
-import { getPublishedPosts, getTranslation, type BlogEntry } from '../../../lib/blog';
+import Breadcrumbs from '../../../components/blog/Breadcrumbs.astro';
+import LimitsBox from '../../../components/blog/LimitsBox.astro';
+import PostMeta from '../../../components/blog/PostMeta.astro';
+import PrevNext from '../../../components/blog/PrevNext.astro';
+import SeriesNav from '../../../components/blog/SeriesNav.astro';
+import TableOfContents from '../../../components/blog/TableOfContents.astro';
+import { blogPostPath } from '../../../i18n/routes';
+import { getPublishedPosts, getSeriesPosts, getTranslation, readingMinutes, type BlogEntry } from '../../../lib/blog';
 import { getSeries } from '../../../data/series';
 
 export async function getStaticPaths() {
-  const enPosts = await getPublishedPosts('en');
-
+  const posts = await getPublishedPosts('en');
   return Promise.all(
-    enPosts.map(async (entry) => {
-      const translated = await getTranslation(entry);
-
-      return {
-        params: { slug: entry.id },
-        props: { entry, translatedSlug: translated?.id },
-      };
-    }),
+    posts.map(async (entry) => ({
+      params: { slug: entry.id },
+      props: { entry, translatedSlug: (await getTranslation(entry))?.id },
+    })),
   );
 }
 
@@ -27,20 +27,15 @@ export interface Props {
 }
 
 const { entry, translatedSlug } = Astro.props;
-const { Content } = await render(entry);
-
+const { Content, headings } = await render(entry);
 const lang = 'en' as const;
-const t = getUi(lang);
 const path = blogPostPath(lang, entry.id);
 const alternatePath = translatedSlug ? blogPostPath('es', translatedSlug) : undefined;
-const dateLabel = entry.data.date.toISOString().slice(0, 10);
-const updatedLabel = entry.data.updated?.toISOString().slice(0, 10);
 const siteUrl = Astro.site ?? new URL('https://jnegrete.dev');
 const ownUrl = new URL(path, siteUrl).toString();
 const ogImagePath = entry.data.cover?.src.src ?? `/og/${entry.id}.png`;
-const imageUrl = new URL(ogImagePath, siteUrl).toString();
-const canonical = entry.data.canonical ?? ownUrl;
 const seriesDefinition = entry.data.series ? getSeries(entry.data.series) : undefined;
+const seriesPosts = entry.data.series ? await getSeriesPosts(entry.data.series, lang) : [];
 const article = {
   publishedTime: entry.data.date,
   modifiedTime: entry.data.updated ?? entry.data.date,
@@ -52,14 +47,14 @@ const article = {
 };
 const post = {
   url: ownUrl,
-  canonical,
+  canonical: entry.data.canonical ?? ownUrl,
   title: entry.data.title,
   description: entry.data.description,
   publishedTime: entry.data.date,
   modifiedTime: entry.data.updated ?? entry.data.date,
   lang,
   tags: entry.data.tags,
-  image: imageUrl,
+  image: new URL(ogImagePath, siteUrl).toString(),
   ...(entry.data.series &&
     seriesDefinition && { series: { id: entry.data.series, name: seriesDefinition.title[lang] } }),
 };
@@ -78,100 +73,139 @@ const post = {
   post={post}
 >
   <article class="post">
-    <a href={blogIndexPath(lang)} class="back-link">{t.blog.backToList}</a>
-    <h1>{entry.data.title}</h1>
-    <div class="post__meta">
-      <span>{t.blog.publishedOn} {dateLabel}</span>
-      {
-        updatedLabel && (
-          <span>
-            {t.blog.updatedOn} {updatedLabel}
-          </span>
-        )
-      }
-      {entry.data.tags.length > 0 && <span class="post__tags">{entry.data.tags.join(' · ')}</span>}
+    <header class="article-top">
+      <Breadcrumbs
+        lang={lang}
+        title={entry.data.title}
+        series={entry.data.series && seriesDefinition
+          ? { id: entry.data.series, title: seriesDefinition.title[lang] }
+          : undefined}
+      />
+      <PostMeta
+        lang={lang}
+        date={entry.data.date}
+        updated={entry.data.updated}
+        minutes={readingMinutes(entry.body)}
+        seriesTitle={seriesDefinition?.title[lang]}
+        seriesOrder={entry.data.seriesOrder}
+        seriesTotal={seriesPosts.length}
+      />
+      <h1>{entry.data.title}</h1>
+    </header>
+
+    <div class="two-col">
+      <div class="post__body"><Content /></div>
+      <aside class="rail">
+        <TableOfContents lang={lang} headings={headings} />
+        {
+          seriesDefinition && (
+            <SeriesNav lang={lang} definition={seriesDefinition} posts={seriesPosts} currentSlug={entry.id} />
+          )
+        }
+        <LimitsBox
+          lang={lang}
+          prerequisites={entry.data.prerequisites}
+          limits={entry.data.limits}
+          lastUpdated={entry.data.updated ?? entry.data.date}
+        />
+      </aside>
     </div>
-    <div class="post__body">
-      <Content />
-    </div>
+
+    <PrevNext lang={lang} entry={entry} seriesPosts={seriesPosts} seriesDefinition={seriesDefinition} />
   </article>
 </Base>
 
 <style>
   .post {
-    padding: 56px 24px 80px;
-    max-width: 720px;
+    padding-bottom: 80px;
+  }
+  .article-top,
+  .two-col {
+    width: 100%;
+    max-width: 1240px;
     margin: 0 auto;
+    padding-right: 24px;
+    padding-left: 24px;
   }
-
-  .back-link {
-    display: inline-block;
-    margin-bottom: 32px;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-muted);
+  .article-top {
+    padding-top: 40px;
   }
-
-  .back-link:hover {
-    color: var(--color-accent);
-    opacity: 1;
-  }
-
-  .post h1 {
+  h1 {
+    max-width: 900px;
+    margin: 0 0 28px;
     font-family: var(--font-sans);
     font-size: 44px;
     font-weight: 700;
     letter-spacing: -0.03em;
-    margin: 0 0 20px;
     line-height: 1.05;
   }
-
-  .post__meta {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-muted-dim);
-    padding-bottom: 28px;
-    border-bottom: 1px solid var(--color-border);
-    margin-bottom: 32px;
+  .two-col {
+    display: grid;
+    grid-template-columns: minmax(0, 720px) 300px;
+    gap: 48px;
+    align-items: start;
+    justify-content: space-between;
+    padding-bottom: 20px;
   }
-
-  .post__tags {
-    color: var(--color-accent);
-  }
-
   .post__body {
+    min-width: 0;
+    color: var(--color-muted-soft);
     font-size: 15px;
     line-height: 1.9;
-    color: var(--color-muted-soft);
   }
-
   .post__body :global(h2),
   .post__body :global(h3) {
-    font-family: var(--font-sans);
-    color: var(--color-text);
     margin-top: 2em;
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    scroll-margin-top: 90px;
   }
-
+  .post__body :global(h2:first-child) {
+    margin-top: 0;
+  }
   .post__body :global(a) {
     color: var(--color-accent);
     text-decoration: underline;
   }
-
   .post__body :global(code) {
-    background: var(--color-border);
     padding: 2px 6px;
+    background: var(--color-border);
     font-size: 0.9em;
   }
-
   .post__body :global(pre) {
-    background: #1c1c1e;
-    padding: 16px;
+    max-width: 100%;
     overflow-x: auto;
     border: 1px solid var(--color-border);
+    background: #1c1c1e;
+  }
+  .post__body :global(.expressive-code) {
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .rail {
+    position: sticky;
+    top: 82px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+  }
+  @media (max-width: 1059px) {
+    h1 {
+      font-size: 30px;
+    }
+    .two-col {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .rail {
+      position: static;
+    }
+  }
+  @media (max-width: 420px) {
+    .article-top,
+    .two-col {
+      padding-right: 16px;
+      padding-left: 16px;
+    }
   }
 </style>

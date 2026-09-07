@@ -37,6 +37,14 @@ export function blogIndexPath(lang: Lang): string {
   return routes.blog[lang];
 }
 
+/** Paginated blog index path; page one always resolves to the canonical index. */
+export function blogPagePath(lang: Lang, page: number): string {
+  if (!Number.isInteger(page) || page < 1) {
+    throw new Error(`Invalid blog page "${page}". Expected a positive integer.`);
+  }
+  return page === 1 ? blogIndexPath(lang) : `${routes.blog[lang]}${page}/`;
+}
+
 /** Blog post detail path for a language + slug. */
 export function blogPostPath(lang: Lang, slug: string): string {
   return `${routes.blog[lang]}${slug}/`;

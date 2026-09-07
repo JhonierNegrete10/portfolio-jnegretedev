@@ -1,0 +1,168 @@
+---
+import type { SeriesDefinition } from '../../data/series';
+import { getUi } from '../../i18n/ui';
+import { blogPostPath, blogSeriesPath, type Lang } from '../../i18n/routes';
+import { readingMinutes, type BlogEntry } from '../../lib/blog';
+
+export interface Props {
+  lang: Lang;
+  id: string;
+  definition: SeriesDefinition;
+  posts: BlogEntry[];
+  baseGuide?: BlogEntry;
+}
+
+const { lang, id, definition, posts, baseGuide } = Astro.props;
+const t = getUi(lang);
+const planned = definition.planned?.[lang] ?? [];
+const lastOrder = Math.max(0, ...posts.map((post) => post.data.seriesOrder ?? 0));
+const date = (value: Date) => value.toISOString().slice(0, 10);
+---
+
+<article class="series-card">
+  <h2><a href={blogSeriesPath(lang, id)}>{definition.title[lang]}</a></h2>
+  <p class="description">{definition.description[lang]}</p>
+  <ol>
+    {
+      baseGuide && (
+        <li>
+          <span class="number">00</span>
+          <div>
+            <a class="title" href={blogPostPath(lang, baseGuide.id)}>
+              {t.blog.baseGuide}: {baseGuide.data.title}
+            </a>
+            <p>{baseGuide.data.description}</p>
+          </div>
+          <span class="meta">
+            {date(baseGuide.data.date)} · {readingMinutes(baseGuide.body)} {t.blog.readMinutes}
+          </span>
+        </li>
+      )
+    }
+    {
+      posts.map((post) => (
+        <li>
+          <span class="number">{String(post.data.seriesOrder).padStart(2, '0')}</span>
+          <div>
+            <a class="title" href={blogPostPath(lang, post.id)}>
+              {post.data.title}
+            </a>
+            <p>{post.data.description}</p>
+          </div>
+          <span class="meta">
+            {date(post.data.date)} · {readingMinutes(post.body)} {t.blog.readMinutes}
+          </span>
+        </li>
+      ))
+    }
+    {
+      planned.map((title, index) => (
+        <li class="planned">
+          <span class="number">{String(lastOrder + index + 1).padStart(2, '0')}</span>
+          <div>
+            <span class="title">{title}</span>
+          </div>
+          <span class="meta">{t.blog.upcoming}</span>
+        </li>
+      ))
+    }
+  </ol>
+</article>
+
+<style>
+  .series-card {
+    padding: 28px;
+    border: 1px solid var(--color-border);
+  }
+
+  h2 {
+    margin: 0 0 8px;
+    font-family: var(--font-sans);
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+
+  h2 a {
+    color: var(--color-text);
+  }
+
+  .description {
+    max-width: 70ch;
+    margin: 0 0 20px;
+    color: var(--color-muted-soft);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  ol {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    display: grid;
+    grid-template-columns: 34px 1fr auto;
+    gap: 16px;
+    align-items: start;
+    padding: 14px 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  li:first-child {
+    border-top: 0;
+  }
+
+  .number {
+    color: var(--color-muted-dim);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .title {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+
+  li p {
+    margin: 4px 0 0;
+    color: var(--color-muted);
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+
+  .meta {
+    color: var(--color-muted-dim);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-align: right;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .planned .title,
+  .planned .meta {
+    color: var(--color-muted-dim);
+  }
+
+  @media (max-width: 1059px) {
+    li {
+      grid-template-columns: 24px minmax(0, 1fr);
+    }
+
+    .meta {
+      grid-column: 1 / -1;
+      text-align: left;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .series-card {
+      padding: 20px 16px;
+    }
+  }
+</style>

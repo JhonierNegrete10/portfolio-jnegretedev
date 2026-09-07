@@ -78,10 +78,12 @@ export default function blogSitemap({ site, routes }) {
       const pathname = new URL(item.url).pathname;
       const hubLanguage =
         pathname === routes.blog.es ||
+        new RegExp(`^${routes.blog.es}\\d+/$`).test(pathname) ||
         pathname.startsWith(`${routes.blog.es}serie/`) ||
         pathname.startsWith(`${routes.blog.es}tema/`)
           ? 'es'
           : pathname === routes.blog.en ||
+              new RegExp(`^${routes.blog.en}\\d+/$`).test(pathname) ||
               pathname.startsWith(`${routes.blog.en}series/`) ||
               pathname.startsWith(`${routes.blog.en}topic/`)
             ? 'en'

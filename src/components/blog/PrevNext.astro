@@ -1,0 +1,98 @@
+---
+import type { SeriesDefinition } from '../../data/series';
+import { getUi } from '../../i18n/ui';
+import { blogIndexPath, blogPostPath, blogSeriesPath, type Lang } from '../../i18n/routes';
+import type { BlogEntry } from '../../lib/blog';
+
+export interface Props {
+  lang: Lang;
+  entry: BlogEntry;
+  seriesPosts?: BlogEntry[];
+  seriesDefinition?: SeriesDefinition;
+}
+
+const { lang, entry, seriesPosts = [], seriesDefinition } = Astro.props;
+const t = getUi(lang);
+const index = seriesPosts.findIndex((post) => post.id === entry.id);
+const previousPost = index > 0 ? seriesPosts[index - 1] : undefined;
+const nextPost = index >= 0 ? seriesPosts[index + 1] : undefined;
+const seriesHub = entry.data.series ? blogSeriesPath(lang, entry.data.series) : blogIndexPath(lang);
+const baseGuideSlug = seriesDefinition?.baseGuideSlug?.[lang];
+
+const previous = previousPost
+  ? { href: blogPostPath(lang, previousPost.id), title: previousPost.data.title }
+  : baseGuideSlug && baseGuideSlug !== entry.id
+    ? { href: blogPostPath(lang, baseGuideSlug), title: t.blog.baseGuide }
+    : entry.data.series
+      ? { href: seriesHub, title: seriesDefinition?.title[lang] ?? t.blog.seriesTitle }
+      : { href: blogIndexPath(lang), title: t.blog.allArticles };
+
+const next = entry.data.nextStep
+  ? entry.data.nextStep
+  : nextPost
+    ? { href: blogPostPath(lang, nextPost.id), label: nextPost.data.title }
+    : {
+        href: seriesHub,
+        label: entry.data.series ? (seriesDefinition?.title[lang] ?? t.blog.seriesTitle) : t.blog.allArticles,
+      };
+---
+
+<nav class="prev-next" aria-label={`${t.blog.previous} / ${t.blog.nextStep}`}>
+  <a class="card" href={previous.href} data-blog-block="prev">
+    <span class="label">{t.blog.previous}</span>
+    <strong>{previous.title}</strong>
+  </a>
+  <a class="card next" href={next.href} data-blog-block="next-step">
+    <span class="label">{t.blog.nextStep}</span>
+    <strong>{next.label}</strong>
+  </a>
+</nav>
+
+<style>
+  .prev-next {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 1240px;
+    margin: 40px auto 0;
+    padding: 24px 24px 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .card.next {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .label {
+    color: var(--color-muted-dim);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .next .label {
+    color: var(--color-accent);
+  }
+
+  strong {
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 700px) {
+    .prev-next {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

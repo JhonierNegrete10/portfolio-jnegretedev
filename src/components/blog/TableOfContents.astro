@@ -1,0 +1,60 @@
+---
+import type { MarkdownHeading } from 'astro';
+import { getUi } from '../../i18n/ui';
+import type { Lang } from '../../i18n/routes';
+
+export interface Props {
+  lang: Lang;
+  headings: MarkdownHeading[];
+}
+
+const { lang, headings } = Astro.props;
+const t = getUi(lang);
+const entries = headings.filter(({ depth }) => depth === 2 || depth === 3);
+---
+
+<nav class="rail-box" aria-label={t.blog.toc}>
+  <h2>{t.blog.toc}</h2>
+  <ol>
+    {
+      entries.map((heading) => (
+        <li class:list={{ nested: heading.depth === 3 }}>
+          <a href={`#${heading.slug}`}>{heading.text}</a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<style>
+  .rail-box {
+    border: 1px solid var(--color-border);
+    padding: 18px;
+  }
+
+  h2 {
+    margin: 0 0 12px;
+    color: var(--color-muted);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  ol {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li.nested {
+    padding-left: 12px;
+  }
+
+  a {
+    color: var(--color-muted-soft);
+    font-size: 12.5px;
+  }
+</style>

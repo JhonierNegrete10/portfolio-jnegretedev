@@ -1,218 +1,210 @@
 ---
 import Base from '../../../layouts/Base.astro';
+import SeriesCard from '../../../components/blog/SeriesCard.astro';
 import { getUi } from '../../../i18n/ui';
-import { localizedPath, blogPostPath, rssPath } from '../../../i18n/routes';
-import { getPublishedPosts, readingMinutes } from '../../../lib/blog';
+import { blogPagePath, blogPostPath, blogTopicPath, rssPath } from '../../../i18n/routes';
+import { getPublishedPosts, getSeriesWithPosts, readingMinutes } from '../../../lib/blog';
 
 const lang = 'en' as const;
 const t = getUi(lang);
-const path = localizedPath('blog', lang);
-const alternatePath = localizedPath('blog', 'es');
-
+const path = blogPagePath(lang, 1);
 const allPosts = await getPublishedPosts(lang);
-const posts = allPosts
-  .map((entry, index) => {
-    const minutes = readingMinutes(entry.body);
-    return {
-      no: String(allPosts.length - index).padStart(3, '0'),
-      href: blogPostPath(lang, entry.id),
-      date: entry.data.date.toISOString().slice(0, 10),
-      title: entry.data.title,
-      description: entry.data.description,
-      tags: entry.data.tags,
-      readMinutes: `${minutes} MIN`,
-    };
-  });
-
-const count = `${String(posts.length).padStart(3, '0')} ${t.blog.countSuffix}`;
+const seriesGroups = await getSeriesWithPosts(lang);
+const posts = allPosts.slice(0, 10);
+const count = `${String(allPosts.length).padStart(3, '0')} ${t.blog.countSuffix}`;
 ---
 
-<Base lang={lang} page="blog" title={t.blog.title} description={t.meta.home.description} path={path} alternatePath={alternatePath}>
-  <div class="header">
-    <h2>{t.blog.title}<span class="accent">.</span></h2>
-    <div class="count">{count}</div>
-  </div>
+<Base
+  lang={lang}
+  page="blog"
+  title={t.blog.title}
+  description={t.meta.home.description}
+  path={path}
+  alternatePath={blogPagePath('es', 1)}
+>
+  <header class="blog-header">
+    <h1>{t.blog.title}<span>.</span></h1>
+    <p>{count}</p>
+  </header>
 
   {
-    posts.length === 0 ? (
-      <div class="empty">
-        <div class="empty__title">{t.blog.comingSoonTitle}</div>
-        <p class="empty__body">{t.blog.comingSoonBody}</p>
-      </div>
+    allPosts.length === 0 ? (
+      <section class="empty">
+        <h2>{t.blog.comingSoonTitle}</h2>
+        <p>{t.blog.comingSoonBody}</p>
+      </section>
     ) : (
       <>
-        <div class="row row--head">
-          <div class="col-no">No.</div>
-          <div>{t.blog.colDate}</div>
-          <div>{t.blog.colTitle}</div>
-          <div class="col-tags">{t.blog.colTags}</div>
-          <div class="col-read">{t.blog.colRead}</div>
-        </div>
-        {posts.map((post) => (
-          <a href={post.href} class="row row--post">
-            <div class="col-no">{post.no}</div>
-            <div class="row__date">{post.date}</div>
-            <div>
-              <div class="row__title">{post.title}</div>
-              <div class="row__excerpt">{post.description}</div>
-            </div>
-            <div class="col-tags row__tags">{post.tags.join(' · ')}</div>
-            <div class="col-read">{post.readMinutes}</div>
-          </a>
-        ))}
+        {seriesGroups.length > 0 && (
+          <section class="series" aria-label={t.blog.seriesSectionAria}>
+            {seriesGroups.map((group) => (
+              <SeriesCard lang={lang} {...group} />
+            ))}
+          </section>
+        )}
+        <section class="all-posts" aria-label={t.blog.chronologicalAria}>
+          <h2>{t.blog.allArticles}</h2>
+          <div class="flat-list">
+            {posts.map((post) => (
+              <article class="flat-row">
+                <a class="flat-title" href={blogPostPath(lang, post.id)}>
+                  {post.data.title}
+                </a>
+                <div class="flat-tags">
+                  {post.data.tags.map((tag) => (
+                    <a href={blogTopicPath(lang, tag)}>{tag}</a>
+                  ))}
+                </div>
+                <span class="flat-date">
+                  {post.data.date.toISOString().slice(0, 10)} · {readingMinutes(post.body)} {t.blog.readMinutes}
+                </span>
+              </article>
+            ))}
+          </div>
+          {allPosts.length > 10 && (
+            <nav class="pagination" aria-label={t.blog.paginationAria}>
+              <a href={blogPagePath(lang, 2)}>{t.blog.nextPage}</a>
+            </nav>
+          )}
+        </section>
       </>
     )
   }
 
-  <div class="footer-bar">
-    <a href={rssPath(lang)} class="rss-link">{t.blog.rss}</a>
-  </div>
+  <div class="footer-bar"><a href={rssPath(lang)}>{t.blog.rss}</a></div>
 </Base>
 
 <style>
-  .header {
+  .blog-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    justify-content: space-between;
     padding: 56px 24px 40px;
     border-bottom: 1px solid var(--color-border);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
   }
-
-  .header h2 {
+  .blog-header h1 {
+    margin: 0;
     font-family: var(--font-sans);
     font-size: 64px;
     font-weight: 700;
     letter-spacing: -0.03em;
-    margin: 0;
-    text-transform: uppercase;
     line-height: 1;
+    text-transform: uppercase;
   }
-
-  .accent {
+  .blog-header h1 span {
     color: var(--color-accent);
   }
-
-  .count {
+  .blog-header p {
+    margin: 0;
+    color: var(--color-muted-dim);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .series {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+  .all-posts {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+  }
+  .all-posts h2 {
+    margin: 0 0 16px;
+    font-family: var(--font-sans);
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+  }
+  .flat-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-top: 0;
+    font-size: 12.5px;
+  }
+  .flat-row:first-child {
+    border-top: 1px solid var(--color-border);
+  }
+  .flat-title {
+    color: var(--color-text);
+  }
+  .flat-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+  }
+  .flat-tags a {
+    color: var(--color-accent);
+  }
+  .flat-date {
+    color: var(--color-muted-dim);
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--color-muted-dim);
+    white-space: nowrap;
   }
-
+  .pagination {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 20px;
+  }
+  .pagination a,
+  .footer-bar a {
+    padding: 10px 14px;
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
   .empty {
     padding: 64px 24px;
     border-bottom: 1px solid var(--color-border);
     text-align: center;
   }
-
-  .empty__title {
+  .empty h2 {
+    margin: 0 0 12px;
+    color: var(--color-accent);
     font-family: var(--font-sans);
     font-size: 24px;
-    font-weight: 600;
-    color: var(--color-accent);
     text-transform: uppercase;
-    margin-bottom: 12px;
   }
-
-  .empty__body {
-    font-size: 14px;
-    line-height: 1.8;
-    color: var(--color-muted-soft);
+  .empty p {
     max-width: 480px;
     margin: 0 auto;
+    color: var(--color-muted-soft);
+    line-height: 1.8;
   }
-
-  .row {
-    display: grid;
-    grid-template-columns: 70px 120px 1.5fr 1fr 110px;
-    border-bottom: 1px solid var(--color-border);
-    padding: 12px 24px;
-    gap: 16px;
-    align-items: baseline;
-  }
-
-  .row--head {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-muted-dim);
-  }
-
-  .row--post {
-    padding: 22px 24px;
-    color: var(--color-text);
-    font-size: 13px;
-    transition:
-      background-color 0.15s,
-      color 0.15s;
-  }
-
-  .row--post:hover {
-    background: var(--color-accent);
-    color: var(--color-bg);
-    opacity: 1;
-  }
-
-  .row__date,
-  .row__tags {
-    opacity: 0.6;
-  }
-
-  .row__title {
-    font-family: var(--font-sans);
-    font-size: 20px;
-    font-weight: 600;
-  }
-
-  .row__excerpt {
-    opacity: 0.6;
-    margin-top: 6px;
-    max-width: 480px;
-    line-height: 1.6;
-  }
-
-  .col-read {
-    text-align: right;
-  }
-
   .footer-bar {
-    padding: 32px 24px;
     display: flex;
     justify-content: flex-end;
+    padding: 32px 24px;
   }
-
-  .rss-link {
-    border: 1px solid var(--color-border-strong);
-    padding: 12px 20px;
-    color: var(--color-text);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    transition:
-      background-color 0.15s,
-      color 0.15s,
-      border-color 0.15s;
-  }
-
-  .rss-link:hover {
-    background: var(--color-accent);
-    color: var(--color-bg);
-    border-color: var(--color-accent);
-    opacity: 1;
-  }
-
   @media (max-width: 1059px) {
-    .header h2 {
+    .blog-header h1 {
       font-size: 40px;
     }
-
-    .row {
-      grid-template-columns: 90px 1fr 60px;
+    .flat-row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 4px;
     }
-
-    .col-no,
-    .col-tags {
-      display: none;
+  }
+  @media (max-width: 420px) {
+    .blog-header,
+    .series,
+    .all-posts {
+      padding-right: 16px;
+      padding-left: 16px;
     }
   }
 </style>
