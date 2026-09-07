@@ -15,7 +15,6 @@ const t = getUi(lang);
 const path = blogSeriesPath(lang, group.id);
 const iso = (value: Date) => value.toISOString().slice(0, 10);
 const publishedCount = group.posts.length + (group.baseGuide ? 1 : 0);
-const lastOrder = Math.max(0, ...group.posts.map((post) => post.data.seriesOrder ?? 0));
 ---
 
 <Base
@@ -50,9 +49,9 @@ const lastOrder = Math.max(0, ...group.posts.map((post) => post.data.seriesOrder
         )
       }
       {
-        group.posts.map((post) => (
+        group.posts.map((post, index) => (
           <li>
-            <span class="number">{String(post.data.seriesOrder).padStart(2, '0')}</span>
+            <span class="number">{String(index + 1).padStart(2, '0')}</span>
             <div>
               <a href={blogPostPath(lang, post.id)}>{post.data.title}</a>
               <p>{post.data.description}</p>
@@ -66,7 +65,7 @@ const lastOrder = Math.max(0, ...group.posts.map((post) => post.data.seriesOrder
       {
         group.planned.map((piece, index) => (
           <li class="planned">
-            <span class="number">{String(lastOrder + index + 1).padStart(2, '0')}</span>
+            <span class="number">{String(group.posts.length + index + 1).padStart(2, '0')}</span>
             <div>
               <span class="title">{piece.title}</span>
               {piece.description && <p>{piece.description}</p>}

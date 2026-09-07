@@ -21,23 +21,11 @@ export interface Props {
   alternatePath?: string;
   /** Set true on the 404 page. */
   noindex?: boolean;
-  /** Keep following links on intentionally thin blog hub pages. */
-  noindexFollow?: boolean;
   article?: ArticleMetadata;
   post?: StructuredBlogPost;
 }
 
-const {
-  lang,
-  title,
-  description,
-  path,
-  alternatePath,
-  noindex = false,
-  noindexFollow = false,
-  article,
-  post,
-} = Astro.props;
+const { lang, title, description, path, alternatePath, noindex = false, article, post } = Astro.props;
 
 const siteUrl = Astro.site ?? new URL('https://jnegrete.dev');
 const ownUrl = new URL(path, siteUrl).toString();
@@ -60,12 +48,7 @@ const fullTitle = `${title} — ${profile.name}`;
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{fullTitle}</title>
 <meta name="description" content={description} />
-{noindexFollow && <meta name="robots" content="noindex, follow" />}
-{
-  noindex && !noindexFollow && (
-    <meta name="robots" content={path === '/404.html' ? 'noindex, nofollow' : 'noindex, follow'} />
-  )
-}
+{noindex && <meta name="robots" content={path === '/404.html' ? 'noindex, nofollow' : 'noindex, follow'} />}
 
 <link rel="canonical" href={canonical} />
 {esPath && <link rel="alternate" hreflang="es" href={new URL(esPath, siteUrl).toString()} />}

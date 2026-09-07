@@ -30,9 +30,9 @@ const baseGuideSlug = definition.baseGuideSlug?.[lang];
       )
     }
     {
-      posts.map((post) => (
+      posts.map((post, index) => (
         <li class:list={{ current: post.id === currentSlug }}>
-          <span class="number">{String(post.data.seriesOrder).padStart(2, '0')}</span>
+          <span class="number">{String(index + 1).padStart(2, '0')}</span>
           <a href={blogPostPath(lang, post.id)} aria-current={post.id === currentSlug ? 'page' : undefined}>
             {post.data.title}
           </a>

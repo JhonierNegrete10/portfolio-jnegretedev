@@ -16,7 +16,7 @@ const entries = headings.filter(({ depth }) => depth === 2 || depth === 3);
 {
   entries.length > 0 && (
     <nav class="rail-box" aria-label={t.blog.toc}>
-      <details>
+      <details open>
         <summary>{t.blog.toc}</summary>
         <ol>
           {entries.map((heading) => (
@@ -29,6 +29,13 @@ const entries = headings.filter(({ depth }) => depth === 2 || depth === 3);
     </nav>
   )
 }
+
+<!-- Keep desktop expanded, but start the mobile disclosure closed. Running
+     immediately after the element avoids waiting for hydration. -->
+<script is:inline>
+  const details = document.currentScript?.previousElementSibling?.querySelector('details');
+  if (details && matchMedia('(max-width: 1059px)').matches) details.removeAttribute('open');
+</script>
 
 <style>
   .rail-box {
@@ -79,16 +86,11 @@ const entries = headings.filter(({ depth }) => depth === 2 || depth === 3);
 
   @media (min-width: 1060px) {
     summary {
-      cursor: default;
-      pointer-events: none;
+      cursor: pointer;
     }
 
     summary::after {
       display: none;
-    }
-
-    details:not([open]) > ol {
-      display: flex;
     }
   }
 </style>

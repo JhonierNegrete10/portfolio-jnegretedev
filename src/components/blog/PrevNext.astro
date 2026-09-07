@@ -33,7 +33,9 @@ const next = entry.data.nextStep
         href: seriesHub,
         label: entry.data.series ? (seriesDefinition?.title[lang] ?? t.blog.seriesTitle) : t.blog.allArticles,
       };
-const showPrevious = previous.href !== next.href;
+// The previous card describes progression inside a series. Standalone posts
+// only expose their next step (or the blog index fallback).
+const showPrevious = Boolean(entry.data.series);
 ---
 
 <nav class="prev-next" aria-label={t.blog.previousNextAria}>

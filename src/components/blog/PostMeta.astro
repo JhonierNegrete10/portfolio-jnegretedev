@@ -9,12 +9,12 @@ export interface Props {
   updated?: Date;
   minutes: number;
   seriesTitle?: string;
-  seriesOrder?: number;
+  seriesPosition?: number;
   seriesTotal?: number;
   tags: string[];
 }
 
-const { lang, date, updated, minutes, seriesTitle, seriesOrder, seriesTotal, tags } = Astro.props;
+const { lang, date, updated, minutes, seriesTitle, seriesPosition, seriesTotal, tags } = Astro.props;
 const t = getUi(lang);
 const iso = (value: Date) => value.toISOString().slice(0, 10);
 ---
@@ -28,9 +28,9 @@ const iso = (value: Date) => value.toISOString().slice(0, 10);
     )
   }
   {
-    seriesOrder && seriesTotal && (
+    seriesPosition && seriesTotal && (
       <span>
-        <strong>{t.blog.pieceLabel}</strong> {seriesOrder} {t.blog.ofLabel} {seriesTotal}
+        <strong>{t.blog.pieceLabel}</strong> {seriesPosition} {t.blog.ofLabel} {seriesTotal}
       </span>
     )
   }

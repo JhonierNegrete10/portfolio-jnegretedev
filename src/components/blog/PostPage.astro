@@ -28,6 +28,7 @@ const seriesGroup = entry.data.series
   : undefined;
 const seriesDefinition = seriesGroup?.definition;
 const seriesPosts = seriesGroup?.posts ?? [];
+const seriesPosition = seriesPosts.findIndex((post) => post.id === entry.id) + 1;
 const article = {
   publishedTime: entry.data.date,
   modifiedTime: entry.data.updated ?? entry.data.date,
@@ -81,7 +82,7 @@ const post = {
         updated={entry.data.updated}
         minutes={readingMinutes(entry.body)}
         seriesTitle={seriesDefinition?.title[lang]}
-        seriesOrder={entry.data.seriesOrder}
+        seriesPosition={seriesPosition || undefined}
         seriesTotal={seriesPosts.length + (seriesGroup?.planned.length ?? 0)}
         tags={entry.data.tags}
       />
@@ -198,6 +199,8 @@ const post = {
   .rail--bottom {
     position: static;
     grid-area: rail-bottom;
+    max-height: none;
+    overflow: visible;
   }
   @media (max-width: 1059px) {
     h1 {

@@ -20,6 +20,7 @@ function newest(posts) {
 export default function blogSitemap({ site, routes }) {
   const lastmodByUrl = new Map();
   const alternatesByUrl = new Map();
+  const noindexUrls = new Set();
 
   function addAlternates(esPath, enPath) {
     const links = [
@@ -31,6 +32,10 @@ export default function blogSitemap({ site, routes }) {
     alternatesByUrl.set(`${site}${enPath}`, links);
   }
 
+  function filter(page) {
+    return !noindexUrls.has(page);
+  }
+
   return {
     integration: {
       name: 'blog-sitemap-metadata',
@@ -38,6 +43,7 @@ export default function blogSitemap({ site, routes }) {
         'astro:config:setup': ({ config }) => {
           lastmodByUrl.clear();
           alternatesByUrl.clear();
+          noindexUrls.clear();
           for (const pair of Object.values(routes)) addAlternates(pair.es, pair.en);
 
           const blogDirectory = fileURLToPath(new URL('src/content/blog/', config.root));
@@ -93,7 +99,9 @@ export default function blogSitemap({ site, routes }) {
             }
             for (const [tag, tagged] of topicGroups) {
               const prefix = lang === 'es' ? `${routes.blog.es}tema/` : `${routes.blog.en}topic/`;
-              lastmodByUrl.set(`${site}${prefix}${tag}/`, newest(tagged));
+              const url = `${site}${prefix}${tag}/`;
+              lastmodByUrl.set(url, newest(tagged));
+              if (tagged.length === 1) noindexUrls.add(url);
             }
 
             for (const [seriesId, definition] of Object.entries(series)) {
@@ -103,7 +111,9 @@ export default function blogSitemap({ site, routes }) {
               const baseGuide = baseSlug ? languagePosts.find((post) => post.slug === baseSlug) : undefined;
               const listed = baseGuide ? [...numbered.filter((post) => post.slug !== baseSlug), baseGuide] : numbered;
               const prefix = lang === 'es' ? `${routes.blog.es}serie/` : `${routes.blog.en}series/`;
-              lastmodByUrl.set(`${site}${prefix}${seriesId}/`, newest(listed));
+              const url = `${site}${prefix}${seriesId}/`;
+              lastmodByUrl.set(url, newest(listed));
+              if (listed.length === 1) noindexUrls.add(url);
             }
           }
 
@@ -113,7 +123,11 @@ export default function blogSitemap({ site, routes }) {
         },
       },
     },
+    filter,
     serialize(item) {
+      // astro.config already delegates serialization to this state object;
+      // applying the same filter here keeps noindex URLs out without changing it.
+      if (!filter(item.url)) return undefined;
       const lastmod = lastmodByUrl.get(item.url);
       if (lastmod) item.lastmod = lastmod;
       else delete item.lastmod;

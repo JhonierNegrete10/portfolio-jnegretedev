@@ -243,7 +243,7 @@ export const ui = {
       nextStep: 'Next practical step →',
       previousNextAria: 'Article navigation',
       baseGuide: 'Base guide',
-      allArticles: 'All posts',
+      allArticles: 'All articles',
       upcoming: 'Coming soon',
       topicTitle: 'Topic',
       seriesTitle: 'Series',

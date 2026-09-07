@@ -16,7 +16,6 @@ export interface Props {
 
 const { lang, id, definition, posts, baseGuide, planned } = Astro.props;
 const t = getUi(lang);
-const lastOrder = Math.max(0, ...posts.map((post) => post.data.seriesOrder ?? 0));
 const date = (value: Date) => value.toISOString().slice(0, 10);
 ---
 
@@ -41,9 +40,9 @@ const date = (value: Date) => value.toISOString().slice(0, 10);
       )
     }
     {
-      posts.map((post) => (
+      posts.map((post, index) => (
         <li>
-          <span class="number">{String(post.data.seriesOrder).padStart(2, '0')}</span>
+          <span class="number">{String(index + 1).padStart(2, '0')}</span>
           <div>
             <a class="title" href={blogPostPath(lang, post.id)}>
               {post.data.title}
@@ -59,7 +58,7 @@ const date = (value: Date) => value.toISOString().slice(0, 10);
     {
       planned.map((piece, index) => (
         <li class="planned">
-          <span class="number">{String(lastOrder + index + 1).padStart(2, '0')}</span>
+          <span class="number">{String(posts.length + index + 1).padStart(2, '0')}</span>
           <div>
             <span class="title">{piece.title}</span>
             {piece.description && <p>{piece.description}</p>}

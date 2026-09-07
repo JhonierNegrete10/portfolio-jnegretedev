@@ -113,18 +113,25 @@ function hasJsonLdType(node, type) {
 function sitePagePath(itemUrl) {
   const parsed = new URL(itemUrl);
   if (parsed.origin !== siteOrigin) return undefined;
-  return path.join(distDirectory, decodeURIComponent(parsed.pathname).replace(/^\//, ''), 'index.html');
+  const pathname = decodeURIComponent(parsed.pathname).replace(/^\//, '');
+  if (!parsed.pathname.endsWith('/')) {
+    const exactPath = path.join(distDirectory, pathname);
+    if (existsSync(exactPath)) return exactPath;
+  }
+  return path.join(distDirectory, pathname, 'index.html');
 }
 
-function verifyPost({ url, htmlPath }) {
+function verifyPost({ url, htmlPath, data }) {
   const html = readFileSync(htmlPath, 'utf8');
 
   const previousLinks = tags(html, 'a').filter((tag) => tag.attrs.get('data-blog-block') === 'prev');
-  if (previousLinks.length !== 1 || previousLinks.some((tag) => !tag.attrs.get('href'))) {
+  const expectedPrevious = data.series ? 'exactly one' : 'zero or one';
+  const invalidPreviousCount = data.series ? previousLinks.length !== 1 : previousLinks.length > 1;
+  if (invalidPreviousCount || previousLinks.some((tag) => !tag.attrs.get('href'))) {
     fail(
       url,
-      'mandatory previous block',
-      `expected exactly one linked data-blog-block="prev", found ${previousLinks.length}`,
+      'series previous block',
+      `expected ${expectedPrevious} linked data-blog-block="prev", found ${previousLinks.length}`,
     );
   }
 
@@ -160,9 +167,10 @@ function verifyPost({ url, htmlPath }) {
   ];
   if (limitsBlocks.length < 1) {
     fail(url, 'mandatory limits block', 'expected data-blog-block="limits"');
-  } else if (!limitsBlocks.some((block) => /<li\b/i.test(block[2]))) {
-    fail(url, 'mandatory limits block', 'expected at least one <li> inside data-blog-block="limits"');
-  } else if (!/Última actualización|Last updated/.test(html)) {
+  } else if (data.series && !limitsBlocks.some((block) => /<li\b/i.test(block[2]))) {
+    fail(url, 'series limits list', 'expected at least one <li> inside data-blog-block="limits"');
+  }
+  if (limitsBlocks.length > 0 && !/Última actualización|Last updated/.test(limitsBlocks[0][2])) {
     fail(url, 'mandatory limits updated text', 'expected "Última actualización" or "Last updated"');
   }
 
