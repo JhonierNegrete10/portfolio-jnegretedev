@@ -1,9 +1,34 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import type { Lang } from '../i18n/routes';
-import { series, type SeriesDefinition } from '../data/series';
+import { series, type PlannedPiece, type SeriesDefinition } from '../data/series';
 import { includeDrafts } from './build-flags';
 
 export type BlogEntry = CollectionEntry<'blog'>;
+
+function sourceName(entry: BlogEntry): string {
+  return entry.filePath ?? `src/content/blog/${entry.id}.mdx`;
+}
+
+function collectSeriesPosts(posts: BlogEntry[], seriesId: string, lang: Lang): BlogEntry[] {
+  const matching = posts.filter((entry) => entry.data.series === seriesId);
+  const byOrder = new Map<number, BlogEntry>();
+
+  for (const entry of matching) {
+    const order = entry.data.seriesOrder;
+    if (order === undefined) continue;
+    const existing = byOrder.get(order);
+    if (existing) {
+      throw new Error(
+        `Blog series-order rule: "${sourceName(existing)}" and "${sourceName(entry)}" both declare lang="${lang}", series="${seriesId}", seriesOrder=${order}.`,
+      );
+    }
+    byOrder.set(order, entry);
+  }
+
+  return matching.sort(
+    (a, b) => (a.data.seriesOrder ?? 0) - (b.data.seriesOrder ?? 0) || a.data.date.valueOf() - b.data.date.valueOf(),
+  );
+}
 
 export async function getPublishedPosts(lang: Lang): Promise<BlogEntry[]> {
   const posts = await getCollection('blog', (entry) => entry.data.lang === lang);
@@ -19,9 +44,7 @@ export async function getPostBySlug(slug: string, lang: Lang): Promise<BlogEntry
 
 export async function getSeriesPosts(seriesId: string, lang: Lang): Promise<BlogEntry[]> {
   const posts = await getPublishedPosts(lang);
-  return posts
-    .filter((entry) => entry.data.series === seriesId)
-    .sort((a, b) => (a.data.seriesOrder ?? 0) - (b.data.seriesOrder ?? 0));
+  return collectSeriesPosts(posts, seriesId, lang);
 }
 
 export interface SeriesWithPosts {
@@ -29,6 +52,7 @@ export interface SeriesWithPosts {
   definition: SeriesDefinition;
   posts: BlogEntry[];
   baseGuide?: BlogEntry;
+  planned: PlannedPiece[];
 }
 
 export interface TagWithCount {
@@ -37,9 +61,26 @@ export interface TagWithCount {
 }
 
 function assertRoutableTag(tag: string): void {
-  if (/\s/.test(tag)) {
-    throw new Error(`Blog tag "${tag}" cannot contain spaces because tags are used verbatim in topic URLs.`);
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(tag)) {
+    throw new Error(`Blog tag "${tag}" violates the routable-tag rule: expected lowercase kebab-case.`);
   }
+}
+
+const warnedPlannedDuplicates = new Set<string>();
+
+function availablePlanned(id: string, definition: SeriesDefinition, lang: Lang, posts: BlogEntry[]): PlannedPiece[] {
+  const publishedTitles = new Set(posts.map((post) => post.data.title.trim().toLocaleLowerCase(lang)));
+  return (definition.planned?.[lang] ?? []).filter((piece) => {
+    if (!publishedTitles.has(piece.title.trim().toLocaleLowerCase(lang))) return true;
+    const warningKey = `${lang}:${id}:${piece.title.toLocaleLowerCase(lang)}`;
+    if (!warnedPlannedDuplicates.has(warningKey)) {
+      console.warn(
+        `Blog planned-title rule: series "${id}" (${lang}) drops planned piece "${piece.title}" because a published post has the same title.`,
+      );
+      warnedPlannedDuplicates.add(warningKey);
+    }
+    return false;
+  });
 }
 
 export async function getSeriesWithPosts(lang: Lang): Promise<SeriesWithPosts[]> {
@@ -47,9 +88,7 @@ export async function getSeriesWithPosts(lang: Lang): Promise<SeriesWithPosts[]>
   const groups: SeriesWithPosts[] = [];
 
   for (const [id, definition] of Object.entries(series)) {
-    const seriesPosts = posts
-      .filter((entry) => entry.data.series === id)
-      .sort((a, b) => (a.data.seriesOrder ?? 0) - (b.data.seriesOrder ?? 0));
+    const seriesPosts = collectSeriesPosts(posts, id, lang);
     if (seriesPosts.length === 0) continue;
 
     const baseGuideSlug = definition.baseGuideSlug?.[lang];
@@ -59,7 +98,18 @@ export async function getSeriesWithPosts(lang: Lang): Promise<SeriesWithPosts[]>
         `Blog series "${id}" declares baseGuideSlug.${lang}="${baseGuideSlug}", but no published ${lang} post has that slug.`,
       );
     }
-    groups.push({ id, definition, posts: seriesPosts, baseGuide });
+    if (baseGuide?.data.series === id) {
+      throw new Error(
+        `Blog base-guide rule: "${sourceName(baseGuide)}" is baseGuideSlug.${lang} for series "${id}" and also declares that series; a base guide must not also be a numbered piece.`,
+      );
+    }
+    groups.push({
+      id,
+      definition,
+      posts: seriesPosts.filter((post) => post.id !== baseGuideSlug),
+      baseGuide,
+      planned: availablePlanned(id, definition, lang, baseGuide ? [...seriesPosts, baseGuide] : seriesPosts),
+    });
   }
 
   return groups;

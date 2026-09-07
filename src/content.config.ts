@@ -21,6 +21,11 @@ function assertFlatBlogContent(directory: string, relativeDirectory = ''): void 
       }
       if (entry.name.startsWith('_')) continue; // fixtures excluded by the loader
       const slug = entry.name.replace(/\.mdx?$/, '');
+      if (/^\d+$/.test(slug)) {
+        throw new Error(
+          `Blog content file "src/content/blog/${entry.name}" violates the numeric-slug rule: numeric slugs collide with /blog/<page>/ pagination.`,
+        );
+      }
       const files = filesBySlug.get(slug) ?? [];
       files.push(`src/content/blog/${entry.name}`);
       filesBySlug.set(slug, files);
@@ -65,6 +70,11 @@ const blog = defineCollection({
     base: './src/content/blog',
     generateId: ({ entry }) => {
       const slug = entry.replace(/\.mdx?$/, '');
+      if (/^\d+$/.test(slug)) {
+        throw new Error(
+          `Blog content file "src/content/blog/${entry}" violates the numeric-slug rule: numeric slugs collide with /blog/<page>/ pagination.`,
+        );
+      }
       if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
         throw new Error(
           `Blog content file "src/content/blog/${entry}" has invalid slug "${slug}": filenames must match ^[a-z0-9]+(-[a-z0-9]+)*$.`,
@@ -89,7 +99,7 @@ const blog = defineCollection({
               .string()
               .trim()
               .min(1, 'tags must not contain empty strings')
-              .refine((tag) => tag === tag.toLowerCase(), 'tags must contain lowercase strings'),
+              .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'tags must be lowercase kebab-case (letters, digits, hyphens)'),
           )
           .min(1, 'tags must contain at least one item')
           .max(6, 'tags must contain at most six items')
@@ -124,6 +134,23 @@ const blog = defineCollection({
       .refine((data) => !data.updated || data.updated >= data.date, {
         message: 'updated must not be earlier than date',
         path: ['updated'],
+      })
+      .superRefine((data, context) => {
+        if (!data.series) return;
+        if (!data.prerequisites?.length) {
+          context.addIssue({
+            code: 'custom',
+            path: ['prerequisites'],
+            message: 'series posts require prerequisites with at least one item',
+          });
+        }
+        if (!data.limits?.length) {
+          context.addIssue({
+            code: 'custom',
+            path: ['limits'],
+            message: 'series posts require limits with at least one item',
+          });
+        }
       }),
 });
 

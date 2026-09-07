@@ -13,34 +13,34 @@ const { lang, prerequisites = [], limits = [], lastUpdated } = Astro.props;
 const t = getUi(lang);
 ---
 
-<aside class="limits" data-blog-block="limits">
-  <h2>{t.blog.limitsTitle}</h2>
+<section class="limits" data-blog-block="limits" aria-labelledby="limits-title">
+  <h2 id="limits-title">{t.blog.limitsTitle}</h2>
   {
     prerequisites.length > 0 && (
-      <section>
+      <div>
         <h3>{t.blog.prerequisitesTitle}</h3>
         <ul>
           {prerequisites.map((item) => (
             <li>{item}</li>
           ))}
         </ul>
-      </section>
+      </div>
     )
   }
   {
     limits.length > 0 && (
-      <section>
+      <div>
         <h3>{t.blog.limitationsTitle}</h3>
         <ul>
           {limits.map((item) => (
             <li>{item}</li>
           ))}
         </ul>
-      </section>
+      </div>
     )
   }
   <p>{t.blog.updatedOn}: {lastUpdated.toISOString().slice(0, 10)}</p>
-</aside>
+</section>
 
 <style>
   .limits {

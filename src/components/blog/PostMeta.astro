@@ -1,6 +1,7 @@
 ---
 import { getUi } from '../../i18n/ui';
 import type { Lang } from '../../i18n/routes';
+import { blogTopicPath } from '../../i18n/routes';
 
 export interface Props {
   lang: Lang;
@@ -10,9 +11,10 @@ export interface Props {
   seriesTitle?: string;
   seriesOrder?: number;
   seriesTotal?: number;
+  tags: string[];
 }
 
-const { lang, date, updated, minutes, seriesTitle, seriesOrder, seriesTotal } = Astro.props;
+const { lang, date, updated, minutes, seriesTitle, seriesOrder, seriesTotal, tags } = Astro.props;
 const t = getUi(lang);
 const iso = (value: Date) => value.toISOString().slice(0, 10);
 ---
@@ -41,6 +43,13 @@ const iso = (value: Date) => value.toISOString().slice(0, 10);
     )
   }
   <span><strong>{minutes}</strong> {t.blog.readMinutes}</span>
+  {
+    tags.map((tag) => (
+      <span class="tag">
+        · <a href={blogTopicPath(lang, tag)}>{tag}</a>
+      </span>
+    ))
+  }
 </div>
 
 <style>
@@ -58,5 +67,13 @@ const iso = (value: Date) => value.toISOString().slice(0, 10);
   strong {
     color: var(--color-muted-soft);
     font-weight: 500;
+  }
+
+  .tag {
+    color: var(--color-muted-dim);
+  }
+
+  .tag a {
+    color: var(--color-accent);
   }
 </style>

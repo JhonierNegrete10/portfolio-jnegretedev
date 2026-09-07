@@ -2,6 +2,8 @@ import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
+import { series } from '../src/data/series.ts';
+import { PAGE_SIZE } from '../src/lib/blog-constants.ts';
 
 function isoDate(value, filePath, field) {
   const parsed = new Date(value);
@@ -11,9 +13,12 @@ function isoDate(value, filePath, field) {
   return parsed.toISOString();
 }
 
+function newest(posts) {
+  return posts.reduce((latest, post) => (!latest || post.lastmod > latest ? post.lastmod : latest), undefined);
+}
+
 export default function blogSitemap({ site, routes }) {
   const lastmodByUrl = new Map();
-  const latestPostByLanguage = new Map();
   const alternatesByUrl = new Map();
 
   function addAlternates(esPath, enPath) {
@@ -32,31 +37,33 @@ export default function blogSitemap({ site, routes }) {
       hooks: {
         'astro:config:setup': ({ config }) => {
           lastmodByUrl.clear();
-          latestPostByLanguage.clear();
           alternatesByUrl.clear();
           for (const pair of Object.values(routes)) addAlternates(pair.es, pair.en);
 
           const blogDirectory = fileURLToPath(new URL('src/content/blog/', config.root));
           const translations = new Map();
           const includeDrafts = process.env.BLOG_INCLUDE_DRAFTS === '1';
+          const posts = [];
 
           for (const name of readdirSync(blogDirectory)) {
             if (name.startsWith('_') || !/\.mdx?$/.test(name)) continue;
-            const filePath = path.join(blogDirectory, name);
-            const { data } = matter(readFileSync(filePath, 'utf8'));
+            const relativePath = `src/content/blog/${name}`;
+            const { data } = matter(readFileSync(path.join(blogDirectory, name), 'utf8'));
             if (data.draft === true && !includeDrafts) continue;
             if (data.lang !== 'es' && data.lang !== 'en') continue;
 
             const slug = name.replace(/\.mdx?$/, '');
-            const url = `${site}${routes.blog[data.lang]}${slug}/`;
-            const lastmod = isoDate(
-              data.updated ?? data.date,
-              `src/content/blog/${name}`,
-              data.updated ? 'updated' : 'date',
-            );
-            lastmodByUrl.set(url, lastmod);
-            const latest = latestPostByLanguage.get(data.lang);
-            if (!latest || lastmod > latest) latestPostByLanguage.set(data.lang, lastmod);
+            const lastmod = isoDate(data.updated ?? data.date, relativePath, data.updated ? 'updated' : 'date');
+            const post = {
+              slug,
+              lang: data.lang,
+              tags: Array.isArray(data.tags) ? data.tags : [],
+              series: data.series,
+              date: isoDate(data.date, relativePath, 'date'),
+              lastmod,
+            };
+            posts.push(post);
+            lastmodByUrl.set(`${site}${routes.blog[data.lang]}${slug}/`, lastmod);
 
             if (typeof data.translationKey === 'string' && data.translationKey) {
               const pair = translations.get(data.translationKey) ?? {};
@@ -65,30 +72,49 @@ export default function blogSitemap({ site, routes }) {
             }
           }
 
-          for (const pair of translations.values()) {
-            if (pair.es && pair.en) {
-              addAlternates(`${routes.blog.es}${pair.es}/`, `${routes.blog.en}${pair.en}/`);
+          for (const lang of ['es', 'en']) {
+            const languagePosts = posts
+              .filter((post) => post.lang === lang)
+              .sort((a, b) => b.date.localeCompare(a.date));
+
+            for (let offset = 0; offset < languagePosts.length; offset += PAGE_SIZE) {
+              const page = offset / PAGE_SIZE + 1;
+              const pagePath = page === 1 ? routes.blog[lang] : `${routes.blog[lang]}${page}/`;
+              lastmodByUrl.set(`${site}${pagePath}`, newest(languagePosts.slice(offset, offset + PAGE_SIZE)));
             }
+
+            const topicGroups = new Map();
+            for (const post of languagePosts) {
+              for (const tag of post.tags) {
+                const tagged = topicGroups.get(tag) ?? [];
+                tagged.push(post);
+                topicGroups.set(tag, tagged);
+              }
+            }
+            for (const [tag, tagged] of topicGroups) {
+              const prefix = lang === 'es' ? `${routes.blog.es}tema/` : `${routes.blog.en}topic/`;
+              lastmodByUrl.set(`${site}${prefix}${tag}/`, newest(tagged));
+            }
+
+            for (const [seriesId, definition] of Object.entries(series)) {
+              const numbered = languagePosts.filter((post) => post.series === seriesId);
+              if (numbered.length === 0) continue;
+              const baseSlug = definition.baseGuideSlug?.[lang];
+              const baseGuide = baseSlug ? languagePosts.find((post) => post.slug === baseSlug) : undefined;
+              const listed = baseGuide ? [...numbered.filter((post) => post.slug !== baseSlug), baseGuide] : numbered;
+              const prefix = lang === 'es' ? `${routes.blog.es}serie/` : `${routes.blog.en}series/`;
+              lastmodByUrl.set(`${site}${prefix}${seriesId}/`, newest(listed));
+            }
+          }
+
+          for (const pair of translations.values()) {
+            if (pair.es && pair.en) addAlternates(`${routes.blog.es}${pair.es}/`, `${routes.blog.en}${pair.en}/`);
           }
         },
       },
     },
     serialize(item) {
-      const postLastmod = lastmodByUrl.get(item.url);
-      const pathname = new URL(item.url).pathname;
-      const hubLanguage =
-        pathname === routes.blog.es ||
-        new RegExp(`^${routes.blog.es}\\d+/$`).test(pathname) ||
-        pathname.startsWith(`${routes.blog.es}serie/`) ||
-        pathname.startsWith(`${routes.blog.es}tema/`)
-          ? 'es'
-          : pathname === routes.blog.en ||
-              new RegExp(`^${routes.blog.en}\\d+/$`).test(pathname) ||
-              pathname.startsWith(`${routes.blog.en}series/`) ||
-              pathname.startsWith(`${routes.blog.en}topic/`)
-            ? 'en'
-            : undefined;
-      const lastmod = postLastmod ?? (hubLanguage ? latestPostByLanguage.get(hubLanguage) : undefined);
+      const lastmod = lastmodByUrl.get(item.url);
       if (lastmod) item.lastmod = lastmod;
       else delete item.lastmod;
       const links = alternatesByUrl.get(item.url);

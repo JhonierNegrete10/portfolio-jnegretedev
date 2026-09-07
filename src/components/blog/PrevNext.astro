@@ -23,9 +23,7 @@ const previous = previousPost
   ? { href: blogPostPath(lang, previousPost.id), title: previousPost.data.title }
   : baseGuideSlug && baseGuideSlug !== entry.id
     ? { href: blogPostPath(lang, baseGuideSlug), title: t.blog.baseGuide }
-    : entry.data.series
-      ? { href: seriesHub, title: seriesDefinition?.title[lang] ?? t.blog.seriesTitle }
-      : { href: blogIndexPath(lang), title: t.blog.allArticles };
+    : { href: blogIndexPath(lang), title: t.blog.allArticles };
 
 const next = entry.data.nextStep
   ? entry.data.nextStep
@@ -35,13 +33,18 @@ const next = entry.data.nextStep
         href: seriesHub,
         label: entry.data.series ? (seriesDefinition?.title[lang] ?? t.blog.seriesTitle) : t.blog.allArticles,
       };
+const showPrevious = previous.href !== next.href;
 ---
 
-<nav class="prev-next" aria-label={`${t.blog.previous} / ${t.blog.nextStep}`}>
-  <a class="card" href={previous.href} data-blog-block="prev">
-    <span class="label">{t.blog.previous}</span>
-    <strong>{previous.title}</strong>
-  </a>
+<nav class="prev-next" aria-label={t.blog.previousNextAria}>
+  {
+    showPrevious && (
+      <a class="card" href={previous.href} data-blog-block="prev">
+        <span class="label">{t.blog.previous}</span>
+        <strong>{previous.title}</strong>
+      </a>
+    )
+  }
   <a class="card next" href={next.href} data-blog-block="next-step">
     <span class="label">{t.blog.nextStep}</span>
     <strong>{next.label}</strong>
@@ -72,6 +75,10 @@ const next = entry.data.nextStep
   .card.next {
     border-color: var(--color-accent);
     color: var(--color-accent);
+  }
+
+  .card:only-child {
+    grid-column: 1 / -1;
   }
 
   .label {

@@ -30,15 +30,15 @@ description: 'Resumen descriptivo de entre 80 y 160 caracteres que aparecerá en
 date: 2026-08-01
 updated: 2026-08-04 # opcional
 lang: es # es | en
-tags: [agentes, evaluacion] # 1..6, minúsculas, sin duplicados
+tags: [agentes, evaluacion-segura] # 1..6, kebab-case minúsculo, sin duplicados
 series: kernel-agents # opcional; debe existir en src/data/series.ts
 seriesOrder: 1 # obligatorio cuando hay series
 translationKey: mi-post # opcional: enlaza la versión ES y EN
 draft: false
 canonical: https://jnegrete.dev/blog/mi-post/ # opcional
-prerequisites:
+prerequisites: # obligatorio y con al menos un elemento cuando hay series
   - Un entorno de pruebas
-limits:
+limits: # obligatorio y con al menos un elemento cuando hay series
   - No sustituye una auditoría formal
 nextStep:
   label: 'Aplicar la guía'
@@ -51,9 +51,9 @@ nextStep:
 Contenido en Markdown…
 ```
 
-`title` no puede estar vacío y el slug del fichero debe usar minúsculas y guiones. Si usas `series`, declara también `seriesOrder`; los identificadores disponibles viven en `src/data/series.ts`. Las imágenes pueden vivir en `src/content/blog/mi-post/`, pero esa subcarpeta no puede contener `.md` ni `.mdx`.
+`title` no puede estar vacío y el slug del fichero debe usar minúsculas y guiones; un slug solo numérico está reservado para la paginación. Si usas `series`, declara también `seriesOrder`, `prerequisites` y `limits`, cada lista con al menos un elemento; los identificadores disponibles viven en `src/data/series.ts`. Las imágenes pueden vivir en `src/content/blog/mi-post/`, pero esa subcarpeta no puede contener `.md` ni `.mdx`.
 
-Cada serie se declara en `src/data/series.ts` con título y descripción en ambos idiomas. Puede incluir una guía base por idioma (`baseGuideSlug`) y piezas todavía no publicadas mediante `planned: { es: [...], en: [...] }`; esas piezas aparecen como “Próximamente” sin enlace. Los `tags` se convierten directamente en rutas de tema, por lo que deben escribirse en minúsculas, sin espacios (usa guiones) y sin traducirlos silenciosamente al construir la URL.
+Cada serie se declara en `src/data/series.ts` con título y descripción en ambos idiomas. Puede incluir una guía base por idioma (`baseGuideSlug`) y piezas todavía no publicadas mediante objetos `planned: { es: [{ title, description?, scheduled? }], en: [...] }`; `scheduled`, cuando existe, usa `YYYY-MM-DD`. Esas piezas aparecen como “Próximamente” sin enlace. Los `tags` se convierten directamente en rutas de tema, por lo que deben usar letras minúsculas ASCII, dígitos y guiones, sin traducirlos silenciosamente al construir la URL.
 
 El listado paginado, la página del post (`/blog/mi-post/`), los hubs de serie y tema, su imagen `/og/mi-post.png`, el sitemap y el feed RSS se generan solos. En producción los posts con `draft: true` quedan fuera de páginas, índices, sitemap, RSS y OG. Para probar deliberadamente borradores en un build local:
 

@@ -1,0 +1,170 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getUi } from '../../i18n/ui';
+import { blogIndexPath, blogPostPath, blogSeriesPath, otherLang, type Lang } from '../../i18n/routes';
+import { readingMinutes, type SeriesWithPosts } from '../../lib/blog';
+
+export interface Props {
+  lang: Lang;
+  group: SeriesWithPosts;
+  hasAlternate: boolean;
+}
+
+const { lang, group, hasAlternate } = Astro.props;
+const t = getUi(lang);
+const path = blogSeriesPath(lang, group.id);
+const iso = (value: Date) => value.toISOString().slice(0, 10);
+const publishedCount = group.posts.length + (group.baseGuide ? 1 : 0);
+const lastOrder = Math.max(0, ...group.posts.map((post) => post.data.seriesOrder ?? 0));
+---
+
+<Base
+  lang={lang}
+  page="blog"
+  title={group.definition.title[lang]}
+  description={group.definition.description[lang]}
+  path={path}
+  alternatePath={hasAlternate ? blogSeriesPath(otherLang(lang), group.id) : undefined}
+  noindex={publishedCount === 1}
+>
+  <div class="hub">
+    <a class="back" href={blogIndexPath(lang)}>← {t.blog.title}</a>
+    <p class="eyebrow">{t.blog.seriesTitle}</p>
+    <h1>{group.definition.title[lang]}</h1>
+    <p class="description">{group.definition.description[lang]}</p>
+    <ol>
+      {
+        group.baseGuide && (
+          <li>
+            <span class="number">00</span>
+            <div>
+              <a href={blogPostPath(lang, group.baseGuide.id)}>
+                {t.blog.baseGuide}: {group.baseGuide.data.title}
+              </a>
+              <p>{group.baseGuide.data.description}</p>
+            </div>
+            <span class="meta">
+              {iso(group.baseGuide.data.date)} · {readingMinutes(group.baseGuide.body)} {t.blog.readMinutes}
+            </span>
+          </li>
+        )
+      }
+      {
+        group.posts.map((post) => (
+          <li>
+            <span class="number">{String(post.data.seriesOrder).padStart(2, '0')}</span>
+            <div>
+              <a href={blogPostPath(lang, post.id)}>{post.data.title}</a>
+              <p>{post.data.description}</p>
+            </div>
+            <span class="meta">
+              {iso(post.data.date)} · {readingMinutes(post.body)} {t.blog.readMinutes}
+            </span>
+          </li>
+        ))
+      }
+      {
+        group.planned.map((piece, index) => (
+          <li class="planned">
+            <span class="number">{String(lastOrder + index + 1).padStart(2, '0')}</span>
+            <div>
+              <span class="title">{piece.title}</span>
+              {piece.description && <p>{piece.description}</p>}
+            </div>
+            <span class="meta">
+              {t.blog.upcoming}
+              {piece.scheduled && ` · ${piece.scheduled}`}
+            </span>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</Base>
+
+<style>
+  .hub {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+  .back,
+  .eyebrow,
+  .meta {
+    color: var(--color-muted-dim);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .back:hover {
+    color: var(--color-accent);
+  }
+  .eyebrow {
+    margin: 40px 0 8px;
+    color: var(--color-accent);
+  }
+  h1 {
+    margin: 0 0 12px;
+    font-family: var(--font-sans);
+    font-size: 48px;
+    line-height: 1.05;
+  }
+  .description {
+    max-width: 70ch;
+    margin: 0 0 36px;
+    color: var(--color-muted-soft);
+    line-height: 1.8;
+  }
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--color-border);
+  }
+  li {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 16px;
+    padding: 20px;
+    border-top: 1px solid var(--color-border);
+  }
+  li:first-child {
+    border-top: 0;
+  }
+  .number {
+    color: var(--color-muted-dim);
+    font-family: var(--font-sans);
+    font-weight: 700;
+  }
+  li a,
+  .title {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+  li p {
+    margin: 6px 0 0;
+    color: var(--color-muted);
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .meta {
+    text-align: right;
+    white-space: nowrap;
+  }
+  .planned .title,
+  .planned .meta {
+    color: var(--color-muted-dim);
+  }
+  @media (max-width: 700px) {
+    h1 {
+      font-size: 34px;
+    }
+    li {
+      grid-template-columns: 28px minmax(0, 1fr);
+    }
+    .meta {
+      grid-column: 1 / -1;
+      text-align: left;
+    }
+  }
+</style>

@@ -13,18 +13,22 @@ const t = getUi(lang);
 const entries = headings.filter(({ depth }) => depth === 2 || depth === 3);
 ---
 
-<nav class="rail-box" aria-label={t.blog.toc}>
-  <h2>{t.blog.toc}</h2>
-  <ol>
-    {
-      entries.map((heading) => (
-        <li class:list={{ nested: heading.depth === 3 }}>
-          <a href={`#${heading.slug}`}>{heading.text}</a>
-        </li>
-      ))
-    }
-  </ol>
-</nav>
+{
+  entries.length > 0 && (
+    <nav class="rail-box" aria-label={t.blog.toc}>
+      <details>
+        <summary>{t.blog.toc}</summary>
+        <ol>
+          {entries.map((heading) => (
+            <li class:list={{ nested: heading.depth === 3 }}>
+              <a href={`#${heading.slug}`}>{heading.text}</a>
+            </li>
+          ))}
+        </ol>
+      </details>
+    </nav>
+  )
+}
 
 <style>
   .rail-box {
@@ -32,12 +36,27 @@ const entries = headings.filter(({ depth }) => depth === 2 || depth === 3);
     padding: 18px;
   }
 
-  h2 {
+  summary {
     margin: 0 0 12px;
     color: var(--color-muted);
+    cursor: pointer;
     font-size: 12px;
     letter-spacing: 0.1em;
+    list-style: none;
     text-transform: uppercase;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary::after {
+    float: right;
+    content: '+';
+  }
+
+  details[open] summary::after {
+    content: '−';
   }
 
   ol {
@@ -56,5 +75,20 @@ const entries = headings.filter(({ depth }) => depth === 2 || depth === 3);
   a {
     color: var(--color-muted-soft);
     font-size: 12.5px;
+  }
+
+  @media (min-width: 1060px) {
+    summary {
+      cursor: default;
+      pointer-events: none;
+    }
+
+    summary::after {
+      display: none;
+    }
+
+    details:not([open]) > ol {
+      display: flex;
+    }
   }
 </style>

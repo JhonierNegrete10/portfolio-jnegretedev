@@ -1,5 +1,6 @@
 ---
 import type { SeriesDefinition } from '../../data/series';
+import type { PlannedPiece } from '../../data/series';
 import { getUi } from '../../i18n/ui';
 import { blogPostPath, blogSeriesPath, type Lang } from '../../i18n/routes';
 import { readingMinutes, type BlogEntry } from '../../lib/blog';
@@ -10,11 +11,11 @@ export interface Props {
   definition: SeriesDefinition;
   posts: BlogEntry[];
   baseGuide?: BlogEntry;
+  planned: PlannedPiece[];
 }
 
-const { lang, id, definition, posts, baseGuide } = Astro.props;
+const { lang, id, definition, posts, baseGuide, planned } = Astro.props;
 const t = getUi(lang);
-const planned = definition.planned?.[lang] ?? [];
 const lastOrder = Math.max(0, ...posts.map((post) => post.data.seriesOrder ?? 0));
 const date = (value: Date) => value.toISOString().slice(0, 10);
 ---
@@ -56,13 +57,17 @@ const date = (value: Date) => value.toISOString().slice(0, 10);
       ))
     }
     {
-      planned.map((title, index) => (
+      planned.map((piece, index) => (
         <li class="planned">
           <span class="number">{String(lastOrder + index + 1).padStart(2, '0')}</span>
           <div>
-            <span class="title">{title}</span>
+            <span class="title">{piece.title}</span>
+            {piece.description && <p>{piece.description}</p>}
           </div>
-          <span class="meta">{t.blog.upcoming}</span>
+          <span class="meta">
+            {t.blog.upcoming}
+            {piece.scheduled && ` · ${piece.scheduled}`}
+          </span>
         </li>
       ))
     }
