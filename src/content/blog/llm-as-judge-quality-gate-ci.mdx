@@ -1,0 +1,270 @@
+---
+title: "LLM-as-judge como quality gate en tu CI de agentes"
+description: "Guía práctica de LLM as a judge eval ci pipeline: rúbricas, umbrales y cómo romper el build si baja la calidad de tu agente."
+date: 2026-08-19
+lang: es
+tags: [agentes-ia, evaluacion, llm-judge, ci-cd, calidad]
+draft: false
+translationKey: "llm-as-judge-quality-gate-ci"
+---
+
+## TL;DR
+
+Un LLM-as-judge coincide **~85%** con evaluadores humanos — más que dos humanos entre sí — y cuesta **500x-5000x** menos que revisión manual. Móntalo como quality gate: dataset de casos, prompt de juez con rúbrica, umbral (faithfulness ≥0.9) que rompe el build en CI si tu agente empeora. Sin esto, cada PR es una apuesta a ciegas.
+
+## Por qué importa en 2026
+
+Si tu equipo despliega agentes de IA sin un gate de calidad automatizado, cada merge a `main` es un experimento sin control. Los tests unitarios tradicionales (assert de igualdad exacta) no sirven cuando la salida es texto generativo: dos respuestas pueden ser semánticamente idénticas y fallar un `assertEqual`, o pueden tener la estructura correcta y estar completamente alucinadas. Necesitas un evaluador que entienda significado, no solo strings.
+
+Aquí es donde entra LLM-as-judge: usar un modelo de lenguaje (normalmente uno fuerte, tipo GPT-4.1/5 o Claude Opus) para puntuar la salida de otro modelo (o de tu propio agente) contra una rúbrica explícita. Según las guías de DeepEval/Confident AI publicadas en 2026, el acuerdo entre un LLM-judge bien calibrado y anotadores humanos ronda el **85%**, superando incluso el acuerdo inter-anotador humano típico (que suele estar en 70-80% para tareas subjetivas como "¿esta respuesta es útil?"). Y el argumento económico es aplastante: evaluar 10.000 casos con un humano puede tomar semanas y costar miles de dólares; con un LLM-judge son minutos y unos pocos dólares de tokens — de ahí el **500x-5000x** de ahorro que reportan los equipos que migraron sus pipelines de QA manual a evaluación automatizada.
+
+El dato que cambia la conversación en las retros de ingeniería no es "el juez es perfecto" (no lo es, tiene sesgos que veremos más adelante), sino que **es suficientemente bueno, consistente y barato como para correr en cada PR**, algo que la revisión humana jamás podría escalar. Si en 2026 sigues confiando en "un compañero lee las respuestas del agente antes de mergear", estás dejando pasar regresiones silenciosas: el agente que hoy responde bien puede degradarse con un cambio de prompt, un upgrade de modelo o una dependencia nueva, y sin un gate automatizado te enteras cuando el cliente se queja.
+
+Este tutorial te lleva de cero a un pipeline de CI que evalúa a tu agente en cada push, calcula métricas de faithfulness y relevancia, y rompe el build si el score cae por debajo del umbral.
+
+## Prerrequisitos
+
+- Un agente o pipeline de LLM ya funcionando (RAG, chatbot, agente con tools — el patrón aplica a cualquiera).
+- Python 3.10+ y acceso a un repo con CI (GitHub Actions, GitLab CI o el runner que uses).
+- Una API key de un LLM fuerte para hacer de juez (Anthropic, OpenAI o el proveedor que ya uses) guardada como variable de entorno — **nunca la escribas en el código ni en el YAML del pipeline**.
+- Familiaridad básica con pytest o el framework de tests que uses en el proyecto.
+- 30-40 minutos para montar el primer gate end-to-end.
+
+## ¿Qué es LLM-as-judge y en qué se diferencia de un test tradicional?
+
+Un test tradicional compara una salida contra un valor esperado exacto (`assert output == expected`). Funciona para funciones puras, pero se rompe con texto generativo: "El total es $450" y "El monto final asciende a 450 dólares" dicen lo mismo y fallarían un assert literal.
+
+LLM-as-judge reemplaza esa comparación por un segundo LLM que **lee la pregunta, el contexto (si aplica), la respuesta del agente, y opcionalmente una respuesta de referencia**, y devuelve un score o un veredicto siguiendo una rúbrica que tú defines. En vez de preguntar "¿es idéntico?", preguntas "¿es correcto, fiel a la fuente y útil?".
+
+Hay dos familias de técnicas que conviene distinguir:
+
+- **G-Eval**: usa chain-of-thought para que el juez genere sus propios pasos de evaluación antes de puntuar, y normaliza el score con las probabilidades del token de salida (form-filling paradigm). Es más robusto que pedirle un número directo porque fuerza al modelo a razonar antes de decidir.
+- **Métricas basadas en QAG (Question-Answer Generation)**: en vez de pedir un score subjetivo, el juez genera preguntas verificables a partir de la respuesta y comprueba cada una contra el contexto fuente. Así funciona faithfulness en Ragas y DeepEval: descompone la respuesta en afirmaciones atómicas y verifica cada una.
+
+Para un quality gate en CI, la clave no es elegir la técnica "más elegante" sino la que te da **un número reproducible con baja varianza**, porque vas a comparar ese número contra un umbral fijo en cada build.
+
+### ¿Qué mide faithfulness y qué mide relevancia?
+
+Son las dos métricas que casi todo pipeline de RAG/agentes necesita, y miden cosas distintas:
+
+- **Faithfulness (fidelidad)**: ¿la respuesta se sostiene únicamente en el contexto recuperado, o inventa información que no está ahí? Se calcula como la proporción de afirmaciones en la respuesta que pueden verificarse contra el contexto. Un umbral típico y razonable para producción es **≥0.9** — por debajo de eso, el agente está alucinando con una frecuencia que un usuario notará.
+- **Answer relevancy (relevancia)**: ¿la respuesta atiende realmente la pregunta que se hizo, o se va por las ramas con información correcta pero irrelevante? Se mide generando preguntas hipotéticas a partir de la respuesta y comparando su similitud semántica con la pregunta original.
+
+Un agente puede ser 100% fiel (todo lo que dice está en el contexto) y 0% relevante (contesta algo que nadie preguntó), o viceversa. Por eso el gate de CI debe evaluar ambas, no una sola.
+
+## ¿Cómo se escribe una rúbrica que un LLM pueda aplicar de forma consistente?
+
+La diferencia entre un juez útil y uno que da resultados aleatorios está en la rúbrica. Una rúbrica vaga ("¿es buena la respuesta?") produce scores con varianza alta porque el modelo rellena los huecos de criterio con su propio juicio, que cambia entre corridas. Una rúbrica buena:
+
+1. Define criterios explícitos y verificables (no "buena calidad" sino "no contradice el contexto", "responde la pregunta original", "no excede 200 palabras").
+2. Da una escala discreta (1-5, o binario) con una descripción de qué significa cada punto.
+3. Pide razonamiento antes del score (chain-of-thought) para reducir el efecto de "adivinar el número".
+4. Incluye ejemplos de respuestas buenas y malas cuando el dominio es específico (soporte técnico, legal, médico).
+
+Este es el prompt de juez que uso como base, adaptable a cualquier dominio:
+
+```python
+JUDGE_SYSTEM_PROMPT = """
+Eres un evaluador experto y estricto de respuestas generadas por un agente de IA.
+Tu trabajo es puntuar UNA respuesta contra la siguiente rúbrica, usando SOLO
+el contexto proporcionado como fuente de verdad. No uses tu propio conocimiento
+del mundo para juzgar hechos: si algo no está en el contexto, no puede
+considerarse "fiel" aunque sea verdadero en la realidad.
+
+RÚBRICA (puntúa cada criterio de 1 a 5):
+
+1. FAITHFULNESS (fidelidad): ¿Cada afirmación de la respuesta puede
+   verificarse en el contexto? 5 = todas verificables, 1 = mayoría inventada.
+2. RELEVANCE (relevancia): ¿La respuesta atiende directamente la pregunta?
+   5 = responde exactamente lo pedido, 1 = ignora la pregunta.
+3. CONCISION: ¿Evita relleno innecesario? 5 = directo, 1 = divaga.
+
+PROCESO OBLIGATORIO:
+- Paso 1: lista las afirmaciones atómicas de la respuesta.
+- Paso 2: para cada una, indica si está soportada por el contexto (SI/NO/PARCIAL).
+- Paso 3: da los 3 scores (1-5) con una frase de justificación cada uno.
+- Paso 4: devuelve SOLO un JSON al final, sin texto adicional después.
+
+Formato final obligatorio (última línea de tu respuesta):
+{"faithfulness": <0.0-1.0>, "relevance": <0.0-1.0>, "concision": <0.0-1.0>, "verdict": "pass"|"fail"}
+
+Donde faithfulness y relevance son el score de 1-5 normalizado a 0-1
+(score/5), y "verdict" es "fail" si faithfulness < 0.9 O relevance < 0.7.
+"""
+
+JUDGE_USER_TEMPLATE = """
+PREGUNTA ORIGINAL:
+{question}
+
+CONTEXTO RECUPERADO (fuente de verdad):
+{context}
+
+RESPUESTA DEL AGENTE A EVALUAR:
+{answer}
+"""
+```
+
+Nota tres decisiones deliberadas: (1) le prohíbo al juez usar conocimiento externo, porque si no lo haces penalizará respuestas correctas-pero-no-verificables-en-contexto o premiará alucinaciones que casualmente son ciertas; (2) fuerzo el razonamiento paso a paso antes del JSON (patrón G-Eval); (3) el umbral de "fail" está codificado en el propio prompt para que el juez sea explícito sobre por qué reprueba, no solo un número sin justificación.
+
+## ¿Cómo se monta el eval para que corra en CI y rompa el build?
+
+La arquitectura mínima tiene tres piezas: un **dataset de casos** (preguntas + contexto + respuesta esperada opcional), un **runner** que ejecuta tu agente contra cada caso y llama al juez, y un **umbral de aprobación** que decide si el build pasa o falla.
+
+Dataset de casos (versionado en el repo, no generado on-the-fly):
+
+```python
+# eval/dataset.py
+EVAL_CASES = [
+    {
+        "id": "billing-001",
+        "question": "¿Cuál es el plazo para reembolsos?",
+        "context": "Política de reembolsos: los usuarios tienen 14 días "
+                    "corridos desde la compra para solicitar reembolso completo.",
+        "expected_topics": ["14 días", "reembolso completo"],
+    },
+    {
+        "id": "billing-002",
+        "question": "¿Puedo cambiar de plan a mitad de mes?",
+        "context": "Los cambios de plan se prorratean automáticamente y "
+                    "se aplican de inmediato, sin esperar al ciclo de facturación.",
+        "expected_topics": ["prorrateo", "inmediato"],
+    },
+    # ... 30-100 casos cubriendo los flujos críticos del agente
+]
+```
+
+Runner + integración con pytest (así lo puede correr `pytest` en CI sin herramientas extra):
+
+```python
+# eval/test_judge_gate.py
+import json
+import os
+import pytest
+from anthropic import Anthropic
+from eval.dataset import EVAL_CASES
+from myagent import run_agent  # tu función que invoca al agente bajo prueba
+
+client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+FAITHFULNESS_THRESHOLD = 0.9
+RELEVANCE_THRESHOLD = 0.7
+
+
+def judge(question: str, context: str, answer: str) -> dict:
+    resp = client.messages.create(
+        model="claude-opus-4-6",
+        max_tokens=1024,
+        system=JUDGE_SYSTEM_PROMPT,
+        messages=[{
+            "role": "user",
+            "content": JUDGE_USER_TEMPLATE.format(
+                question=question, context=context, answer=answer
+            ),
+        }],
+    )
+    text = resp.content[0].text.strip()
+    json_line = text.splitlines()[-1]
+    return json.loads(json_line)
+
+
+@pytest.mark.parametrize("case", EVAL_CASES, ids=lambda c: c["id"])
+def test_agent_quality_gate(case):
+    answer = run_agent(case["question"], context=case["context"])
+    result = judge(case["question"], case["context"], answer)
+
+    assert result["faithfulness"] >= FAITHFULNESS_THRESHOLD, (
+        f"[{case['id']}] faithfulness {result['faithfulness']} "
+        f"< umbral {FAITHFULNESS_THRESHOLD}"
+    )
+    assert result["relevance"] >= RELEVANCE_THRESHOLD, (
+        f"[{case['id']}] relevance {result['relevance']} "
+        f"< umbral {RELEVANCE_THRESHOLD}"
+    )
+```
+
+Workflow de GitHub Actions que lo ejecuta en cada PR y bloquea el merge si falla:
+
+```yaml
+# .github/workflows/llm-judge-gate.yml
+name: LLM-as-judge quality gate
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pytest anthropic
+      - name: Run agent quality gate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: pytest eval/test_judge_gate.py -v --tb=short
+```
+
+Con esto, cualquier PR que degrade la calidad del agente (por debajo de faithfulness 0.9 o relevance 0.7 en cualquier caso del dataset) falla el check de GitHub y no se puede mergear sin revisión explícita. El mismo patrón aplica si orquestas el CI con subagentes — ver "Subagentes en Claude Code" para paralelizar la ejecución de casos si el dataset crece a cientos de entradas.
+
+### ¿Cómo evito que el eval sea flaky por la temperatura del juez?
+
+Fija `temperature=0` (o el mínimo que soporte el proveedor) en las llamadas al juez, y corre cada caso 2-3 veces tomando la mediana si el umbral está cerca del límite. Los LLM-judges tienen menos varianza que los modelos generativos porque la tarea es de clasificación/scoring, pero no es cero — trátalo como cualquier test flaky: si un caso falla intermitentemente, revisa si el prompt de juez es ambiguo antes de subir el umbral para "que pase".
+
+## Herramientas para montar esto sin reinventar la rueda
+
+No necesitas escribir el runner desde cero — hay frameworks maduros para cada pieza del pipeline:
+
+| Herramienta | Qué resuelve | Cuándo usarla |
+|---|---|---|
+| **DeepEval** | Framework de eval con métricas pytest-native (faithfulness, relevancy, G-Eval custom) | Si quieres el patrón de este tutorial ya empaquetado, con `assert_test()` listo para CI |
+| **Ragas** | Métricas especializadas en RAG (faithfulness, context precision/recall, answer relevancy) | Si tu agente es principalmente RAG y necesitas métricas específicas de retrieval |
+| **Arize Phoenix** | Observabilidad + tracing de LLM con evals integrados sobre trazas reales | Si ya tienes tracing y quieres correr evals sobre producción, no solo sobre el dataset offline |
+| **Langfuse** | Tracing, datasets versionados y evals programáticos con dashboards | Si necesitas centralizar prompts, datasets y resultados de eval en un solo lugar para todo el equipo |
+| **Confident AI** | Plataforma cloud de DeepEval con reportes, regresión histórica y comparación entre versiones | Si quieres visualizar tendencias de calidad a través del tiempo, no solo pass/fail puntual |
+
+Para un equipo pequeño, la combinación pragmática es DeepEval (o el patrón manual de este tutorial) para el gate de CI, más Langfuse o Phoenix para observabilidad de producción — el gate te dice "no mergees esto", la observabilidad te dice "esto se degradó en producción la semana pasada aunque el gate pasó".
+
+## Sesgos del juez y cómo mitigarlos
+
+Un LLM-judge no es neutral. Los sesgos documentados más relevantes para un gate de CI:
+
+- **Sesgo de posición**: cuando el juez compara dos respuestas (A vs B), tiende a favorecer la que aparece primero en el prompt, independientemente del contenido. Mitigación: si haces comparaciones pairwise, evalúa en ambos órdenes (A,B) y (B,A) y promedia, o usa scoring absoluto (1-5 por respuesta) en vez de comparación directa cuando sea posible.
+- **Self-preference (auto-preferencia)**: un modelo tiende a puntuar mejor las respuestas generadas por modelos de su misma familia o arquitectura, incluso cuando la calidad objetiva es equivalente. Mitigación: usa un juez de un proveedor **distinto** al que genera las respuestas del agente (si tu agente corre en Claude, considera un juez de otra familia para el gate crítico, o al menos valida periódicamente con humanos que no haya deriva).
+- **Sesgo de verbosidad**: los jueces LLM tienden a preferir respuestas más largas, asociando extensión con completitud, incluso cuando una respuesta corta es objetivamente mejor. Mitigación: incluye "concision" como criterio explícito en la rúbrica (como en el prompt de arriba) y penaliza relleno directamente, no lo dejes implícito.
+- **Sesgo de formato**: el juez puede premiar respuestas con listas, negritas o estructura visual aunque el contenido sea equivalente a una respuesta en prosa simple. Mitigación: pide explícitamente que ignore formato y evalúe solo contenido.
+
+### Límites que un gate automatizado no resuelve
+
+Ningún LLM-judge reemplaza completamente la revisión humana en casos de alto riesgo (legal, médico, financiero) — úsalo como primer filtro que atrapa el 90% de las regresiones obvias, no como aprobación final para cambios sensibles. Tampoco detecta problemas que no están en tu rúbrica: si nunca evaluaste "tono" y el agente empieza a sonar agresivo, el gate seguirá en verde. Revisa y expande la rúbrica y el dataset cada vez que un incidente en producción revele un caso que el eval no cubría — el dataset de casos es un artefacto vivo, no un checklist que se escribe una vez.
+
+## FAQ
+
+### ¿Necesito un modelo distinto para el juez o puedo usar el mismo que genera las respuestas?
+
+Puedes usar el mismo, pero introduces riesgo de self-preference (ver arriba). Para un gate no crítico (feedback rápido en desarrollo) es aceptable usar el mismo proveedor. Para el gate que bloquea producción, prefiere un juez de otra familia de modelos, o al menos valida con una muestra humana cada trimestre que no haya deriva sistemática.
+
+### ¿Cuántos casos necesito en el dataset para que el gate sea confiable?
+
+Empieza con 20-30 casos que cubran los flujos críticos (no los "felices" únicamente: incluye ambigüedad, preguntas fuera de dominio, contexto contradictorio). Crece el dataset cada vez que un bug en producción revela un caso no cubierto — así el dataset se vuelve tu registro de regresiones reales, no una lista teórica.
+
+### ¿Qué pasa si el eval en CI tarda demasiado y frena el pipeline?
+
+Paraleliza la ejecución de casos (pytest-xdist o llamadas async al juez) y considera correr el dataset completo solo en PRs a `main`, con un subconjunto reducido (smoke set de 5-10 casos) en cada push a rama de feature. Si tu CI ya usa runners headless para otras tareas de agentes, revisa "Codex y Cursor CLI headless" para patrones de paralelización que aplican igual aquí.
+
+### ¿El umbral de faithfulness ≥0.9 aplica a cualquier dominio?
+
+Es un punto de partida razonable para RAG conversacional, pero ajústalo a tu tolerancia al riesgo: dominios regulados (salud, finanzas) pueden justificar 0.95+ o incluso doble verificación humana por debajo de ese umbral; un asistente interno de baja criticidad puede tolerar 0.85. Lo importante no es copiar el número sino fijarlo de forma explícita y medirlo, en vez de operar sin gate.
+
+### ¿Cómo justifico el costo de correr esto en cada PR ante el equipo o el negocio?
+
+Con el argumento de ahorro: montar y correr un eval automatizado cuesta una fracción de lo que costaría el equivalente en revisión humana (los 500x-5000x de ahorro reportados por equipos que migraron), y el costo real (tokens del juez) suele ser de centavos a pocos dólares por corrida completa del dataset. Compáralo contra el costo de un incidente en producción no detectado — normalmente el eval se paga solo con evitar un solo bug serio. Si necesitas modelar el costo total de tu stack de agentes (no solo el eval), "Cuánto cuesta un sistema multi-agente" tiene el desglose completo.
+
+### ¿Puedo usar esto también para evaluar agentes con tools, no solo RAG?
+
+Sí — el patrón de rúbrica + juez + umbral es agnóstico a si la respuesta viene de retrieval o de una cadena de tool calls. Lo que cambia es qué pones en "contexto": para un agente con tools, el contexto es el trace de llamadas y sus resultados, y la rúbrica puede añadir criterios como "usó la tool correcta" o "no llamó a una tool destructiva sin confirmación", además de faithfulness y relevancia sobre la respuesta final.
+
+## Para seguir
+
+Si este pipeline te sirvió para tu agente, estos tres tutoriales completan el flujo de producción: cómo paralelizar la ejecución de tu dataset de eval con [Subagentes en Claude Code](/blog/subagentes-claude-code-orquestar-paralelo), cómo correr todo — incluido este gate — desde runners headless con [Codex y Cursor CLI headless](/blog/codex-cursor-cli-headless-ci-cron), y cómo justificar la inversión completa en infraestructura de agentes con [Cuánto cuesta un sistema multi-agente](/blog/cuanto-cuesta-sistema-multi-agente).
