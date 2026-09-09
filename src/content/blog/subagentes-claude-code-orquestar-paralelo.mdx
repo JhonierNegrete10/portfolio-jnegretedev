@@ -1,0 +1,276 @@
+---
+title: "Subagentes en Claude Code: orquestar agentes en paralelo"
+description: "Claude Code subagentes multi agente: qué son, cuándo lanzarlos en paralelo y cuándo en serie, y cómo delegar con phase gates y límites de coste."
+date: 2026-08-07
+lang: es
+tags: [agentes-ia, claude-code, orquestacion, subagentes, tutorial]
+draft: false
+translationKey: "subagentes-claude-code-orquestar-paralelo"
+---
+
+## TL;DR
+
+Un subagente en Claude Code es un proceso con contexto aislado que el orquestador lanza para explorar, evaluar o ejecutar una tarea acotada, y que devuelve solo un resumen. Paralelízalos únicamente para llamadas LLM (investigación, evaluación de alternativas, revisión de calidad); **nunca más de 1** proceso local pesado (tests, Docker, build) a la vez. El patrón que sobrevivió a producción en 2026 no es colaboración libre entre agentes, sino workflow delegado con phase gates.
+
+## Por qué importa en 2026
+
+Durante 2024 y 2025 buena parte de la industria de agentes apostó por arquitecturas peer-to-peer: N agentes autónomos conversando entre sí, cada uno con su propio criterio, coordinándose "en vivo" sin un punto de control central. Un análisis publicado en 2026 con el título *Multi-Agent in Production 2026: What Actually Survived* apunta en esa dirección: los equipos que llevaron esos sistemas a producción real reportan que la colaboración libre peer-to-peer entre agentes murió como patrón operativo. Lo que sobrevivió — y lo que hoy sostiene los sistemas que operan a diario — es el **workflow delegado con phase gates**: un orquestador único que descompone el trabajo, lanza subagentes con un contrato de entrada/salida explícito, y no avanza de fase sin una verificación reproducible.
+
+El dato duro detrás de esta reversión es de coste y de fiabilidad, no de filosofía: cada conversación libre entre agentes añade una superficie de fallo silencioso (el agente A cree que el B validó algo que el B nunca ejecutó) y un multiplicador de tokens que crece de forma no lineal con el número de "turnos de conversación" entre agentes. Con phase gates, cada subagente recibe un encargo cerrado, ejecuta, y el orquestador **verifica el artefacto** antes de dar por buena la fase — no el autorreporte del subagente. Esa distinción, aparentemente burocrática, es la que separa un sistema multi-agente que se puede operar en producción de uno que solo funciona bien en la demo.
+
+Si trabajas con Claude Code a diario, esto no es teoría de arquitectura de agentes en abstracto: es literalmente la diferencia entre usar el tool `Agent` (subagentes) de forma que te ahorre horas, o de forma que te queme presupuesto de tokens y te entregue "trabajo terminado" que en realidad nadie verificó.
+
+## Prerrequisitos
+
+- Claude Code instalado y funcionando (`claude` en tu terminal) o acceso al Claude Agent SDK (TypeScript o Python).
+- Un repositorio real sobre el que practicar — no hace falta que sea grande, pero sí con al menos 2-3 módulos o carpetas distintas para que la exploración en paralelo tenga sentido.
+- Entender la diferencia entre **contexto** (lo que un modelo "ve" en su ventana) y **memoria persistente** (lo que guardas en disco entre sesiones). Los subagentes no comparten contexto entre sí por defecto.
+- Nociones de coste: saber leer una factura de la API de Anthropic o el contador de tokens de Claude Code (`/cost` o el resumen al cerrar sesión).
+- Opcional pero recomendado: haber leído sobre [MCP](/blog/que-es-mcp-model-context-protocol), porque los subagentes suelen tener acceso a un subconjunto distinto de herramientas/MCP que el orquestador.
+
+## ¿Qué es un subagente y por qué existe?
+
+Un subagente es una instancia de Claude que el orquestador (tu sesión principal de Claude Code) lanza para resolver una tarea concreta, con tres propiedades que lo distinguen de "preguntarle lo mismo a la misma conversación":
+
+1. **Contexto aislado.** El subagente arranca sin ver el historial completo de la conversación del orquestador. Solo recibe lo que el orquestador decide pasarle en el prompt de encargo. Esto es una ventaja, no una limitación: evita que 40.000 tokens de contexto acumulado de la sesión principal contaminen (o inflen el coste de) una tarea que solo necesita 3.000.
+2. **Herramientas y modelo propios.** Un subagente puede tener un conjunto de herramientas distinto (por ejemplo, uno de solo lectura para explorar código, sin permisos de escritura) y un modelo distinto (un modelo barato para tareas mecánicas, uno caro para razonamiento difícil).
+3. **Retorno resumido, no transcripción completa.** El orquestador no ve cada paso que dio el subagente — ve su informe final. Esto es clave para el fan-out: si lanzas 5 subagentes de exploración y cada uno vertiera su transcripción completa de vuelta al orquestador, reventarías la ventana de contexto de la sesión principal en la primera ronda.
+
+La razón de ser del patrón es económica y cognitiva a la vez. Económica porque procesar en paralelo 5 búsquedas independientes con 5 contextos pequeños es más barato que una sola conversación lineal que acumula todo ese ruido. Cognitiva porque un modelo razona mejor con un encargo acotado y un criterio de éxito claro que enterrado en 30 turnos de ida y vuelta sobre temas distintos.
+
+En Claude Code esto se expone directamente con el tool `Agent` (a veces llamado `Task` en otras integraciones del SDK): tú, como orquestador, describes la tarea, el subagente la ejecuta con sus propias herramientas, y te devuelve un resultado. Puedes definir subagentes reutilizables como archivos en `.claude/agents/*.md`, con un frontmatter que fija su modelo, sus herramientas permitidas y su system prompt:
+
+```markdown
+---
+name: code-reviewer
+description: Revisor de código enfocado en seguridad y edge cases, no en estilo.
+tools: Read, Grep, Bash
+model: sonnet
+---
+
+Eres un revisor de código senior. Tu única salida es una lista de hallazgos
+con severidad (crítico/alto/medio/bajo), archivo:línea, y el riesgo concreto.
+No sugieras cambios de estilo. No apruebes código: solo reporta.
+```
+
+Con esta definición, el orquestador puede lanzar el subagente sin repetir el system prompt cada vez, y el propio Claude Code sabe qué herramientas concederle.
+
+## ¿Cómo funciona el patrón orquestador → N subagentes?
+
+El flujo mental es: **una sesión (el orquestador) descompone, N subagentes ejecutan, el orquestador reconcilia**. Nunca al revés. Un subagente no debería, salvo casos muy puntuales, lanzar a su vez otros subagentes de forma descontrolada — eso reintroduce exactamente el problema peer-to-peer que el sector abandonó.
+
+En términos de invocación real dentro de Claude Code, esto se ve así (pseudo-código del tool call que hace el orquestador):
+
+```text
+Agent({
+  description: "Explorar módulo de auth",
+  subagent_type: "Explore",
+  prompt: "Busca dónde se valida el JWT en /src/auth. Reporta archivo:línea
+           de la función de validación y si hay manejo de expiración.
+           Máximo 150 palabras de respuesta."
+})
+
+Agent({
+  description: "Explorar módulo de billing",
+  subagent_type: "Explore",
+  prompt: "Busca dónde se calcula el prorrateo en /src/billing. Reporta
+           archivo:línea de la función principal y sus edge cases conocidos.
+           Máximo 150 palabras de respuesta."
+})
+```
+
+Si estas dos tareas son independientes (no necesitan el resultado la una de la otra), el orquestador las lanza **en la misma respuesta**, en paralelo. Si la segunda necesitara el resultado de la primera, van en turnos separados, en serie.
+
+Con el Claude Agent SDK (TypeScript o Python) el mismo patrón se ve a nivel de código:
+
+```typescript
+import { query } from "@anthropic-ai/claude-agent-sdk";
+
+async function fanOutExploracion(modulos: string[]) {
+  const tareas = modulos.map((modulo) =>
+    query({
+      prompt: `Explora el módulo ${modulo} y resume su contrato público
+               (funciones exportadas, tipos, efectos secundarios) en
+               menos de 200 palabras.`,
+      options: {
+        allowedTools: ["Read", "Grep", "Glob"],
+        maxTurns: 8,
+        model: "claude-sonnet-4-5",
+      },
+    })
+  );
+
+  // Las N llamadas LLM corren concurrentes: son I/O de red, no CPU local.
+  const resultados = await Promise.all(tareas);
+  return resultados;
+}
+```
+
+Nota el `maxTurns: 8` y el `allowedTools` restringido a solo lectura: son los dos mecanismos más baratos de contener a un subagente que se desvía o que entra en un loop de reintentos.
+
+## ¿Cuándo lanzar subagentes en paralelo?
+
+La regla de oro que aplica en cualquier infraestructura, incluida una máquina modesta (piensa 4 CPU / 8 GB de RAM, el homelab típico donde muchos corremos estos flujos): **paraleliza llamadas LLM, nunca proceso local pesado**.
+
+Una llamada a un subagente que solo lee archivos, busca en el repo o razona sobre texto es, desde la perspectiva de tu máquina, tráfico de red saliente y un poco de CPU para renderizar el prompt. Puedes lanzar 5, 10, incluso 20 de estas en paralelo sin que tu laptop lo note — el cuello de botella está en el rate limit de la API, no en tus recursos.
+
+Casos típicos donde paralelizar sí compensa:
+
+- **Exploración**: "busca en estos 4 módulos dónde se hace X" — cada búsqueda es independiente.
+- **Evaluación de alternativas**: propones 3-5 diseños distintos y lanzas un subagente por alternativa para que evalúe pros/contras/riesgos de esa alternativa en concreto, sin sesgo del resto.
+- **Quality steps** (la fase L2 del pipeline SDLC): un subagente que revisa seguridad, otro que revisa edge cases, otro que redacta el plan de pruebas — son lentes distintas sobre el mismo diff, no dependen entre sí.
+- **Investigación documental**: leer 6 fuentes distintas para sintetizar un informe.
+
+## ¿Cuándo es mejor secuencial (y cuándo es obligatorio)?
+
+Aquí es donde más equipos se equivocan, y donde la advertencia es más costosa si la ignoras: **todo lo que dispara un proceso local pesado va en serie, uno a la vez**, sin excepción, en cualquier máquina con recursos acotados.
+
+Ejemplos de proceso local pesado:
+
+- Compilación (`tsc`, `webpack build`, `cargo build`).
+- Suites de test (`vitest`, `pytest`, `playwright`).
+- Contenedores Docker levantándose (`docker compose up`).
+- Linters/type-checkers sobre proyectos grandes (`eslint` con `--max-warnings`, `tsc --noEmit` en un monorepo).
+- CLIs de código externas que también consumen CPU/RAM local de forma intensiva (Codex CLI, Cursor CLI corriendo en modo headless).
+
+Si lanzas 3 subagentes en paralelo y cada uno decide, por su cuenta, correr la suite de tests completa o levantar su propio `docker compose`, no estás paralelizando trabajo — estás saturando RAM con 3 copias de Node/Docker compitiendo por el mismo swap, y el resultado casi siempre es un OOM kill o un segfault que además es difícil de diagnosticar porque parece "un bug random" y en realidad es contención de recursos.
+
+La corrección práctica: si necesitas que 3 subagentes verifiquen 3 cambios distintos con tests, el orquestador los serializa — subagente 1 corre sus tests y termina, luego el 2, luego el 3 — aunque eso signifique que la exploración fue paralela pero la verificación no lo sea. Es una asimetría intencional del patrón, no un descuido.
+
+Igual de importante, y menos obvio: incluso cuando el proceso local es "liviano" en apariencia (un `git status`, un `grep`), si varios subagentes escriben al mismo working directory de git al mismo tiempo (por ejemplo, todos corriendo `git stash` o `git checkout` sobre el mismo repo sin worktrees separados) puedes corromper el estado del repo. La solución estándar es dar a cada subagente su propio git worktree cuando su tarea implica tocar archivos, y reservar el árbol principal solo para el orquestador.
+
+## ¿Qué son los phase gates y por qué reemplazaron la colaboración libre?
+
+Un phase gate es un punto de control explícito entre fases del workflow donde el orquestador **verifica el artefacto producido**, no el reporte del subagente sobre lo que produjo. La distinción importa: un subagente puede reportar honestamente "terminé, los tests pasan" basándose en una ejecución parcial, en una lectura equivocada del output, o simplemente alucinando el resultado. El self-report de un subagente delegado no es evidencia — es una hipótesis que hay que reproducir.
+
+En la práctica, un phase gate se ve así:
+
+```text
+Fase: "Implementación completa"
+Gate: el orquestador ejecuta `npm test` él mismo (no confía en el reporte
+      del subagente), lee el output completo, y solo entonces marca la
+      fase como cerrada. Si el subagente dijo "tests verdes" y el
+      orquestador ve fallos, la fase NO pasa — no hay ambigüedad posible.
+```
+
+Este es exactamente el patrón contrario a la colaboración peer-to-peer: en un esquema peer-to-peer, el agente B simplemente confiaría en lo que el agente A le contó. En un esquema con phase gates, hay una autoridad única (el orquestador, normalmente tú operando Claude Code) que no delega la verificación — solo delega la ejecución.
+
+## ¿Cómo delegar bien? El contrato de un buen prompt de subagente
+
+Un encargo mal delegado es la causa número uno de que el fan-out en paralelo salga mal. El contrato mínimo que debe llevar cada prompt de subagente tiene tres partes:
+
+**1. Entrada exacta** — qué contexto recibe, sin dar por hecho que "ya sabe" nada de la conversación previa:
+
+```text
+Contexto: estás auditando el módulo /src/payments de un ERP en Next.js.
+No has visto el resto de la conversación. Aquí está todo lo que necesitas:
+- El bug reportado es "doble cobro en checkout bajo carga".
+- Los archivos relevantes son checkout.ts y webhook-handler.ts.
+```
+
+**2. Salida esperada** — formato, longitud y qué NO incluir:
+
+```text
+Devuelve máximo 200 palabras: (a) la causa raíz en una frase,
+(b) archivo:línea del bug, (c) severidad. No incluyas el código completo,
+no propongas el fix todavía — solo el diagnóstico.
+```
+
+**3. Criterio de terminación** — cuándo el subagente debe parar, no seguir explorando indefinidamente:
+
+```text
+Termina en cuanto encuentres la causa raíz con evidencia (no especules).
+Si tras revisar checkout.ts y webhook-handler.ts no la encuentras,
+reporta "no encontrado en los archivos indicados" — no amplíes el scope
+por tu cuenta a otros módulos.
+```
+
+Sin el criterio de terminación, un subagente de exploración puede consumir 40 turnos leyendo medio repositorio "por si acaso", multiplicando el coste de la tarea por 10 sin que tú lo notes hasta la factura.
+
+## Ejemplo de flujo real: explorar → proponer alternativas → evaluar → planear
+
+Este es el flujo que uso para cualquier tarea de implementación no trivial, y es literalmente el patrón L1 de "nunca planear en frío":
+
+**Paso 1 — Exploración en paralelo.** El orquestador lanza 2-4 subagentes de solo lectura para entender el terreno: uno explora el código existente, otro busca la documentación oficial relevante (Anthropic Claude Agent SDK docs, en el caso de subagentes), otro revisa si ya existe una implementación similar en el repo.
+
+```text
+Agent(description: "Explorar código actual", subagent_type: "Explore", ...)
+Agent(description: "Buscar docs oficiales del SDK", subagent_type: "general-purpose", ...)
+Agent(description: "Buscar prior art en el repo", subagent_type: "Explore", ...)
+```
+
+**Paso 2 — Propuesta de 3-5 alternativas.** Con los hallazgos en mano, el orquestador (o un subagente de síntesis) redacta 3-5 formas distintas de resolver el problema — por ejemplo: (a) un subagente por módulo con `maxTurns` bajo, (b) un solo subagente con más contexto y más turnos, (c) un pipeline con checkpoints intermedios.
+
+**Paso 3 — Evaluación en paralelo, una por alternativa.** Aquí el paralelismo vuelve a tener sentido: cada alternativa se evalúa de forma independiente, sin que la evaluación de la alternativa A sesgue a la B.
+
+```text
+Agent(description: "Evaluar alternativa A", prompt: "Evalúa pros/contras/
+      riesgos concretos de: [alternativa A]. No compares con otras
+      alternativas, solo juzga esta en aislamiento.")
+Agent(description: "Evaluar alternativa B", prompt: "Evalúa pros/contras/
+      riesgos concretos de: [alternativa B]...")
+```
+
+**Paso 4 — Planear.** Solo después de tener exploración + alternativas + evaluación independiente, el orquestador arma el plan final. Este paso es deliberadamente secuencial y deliberadamente tuyo (o del modelo principal): es donde ocurre el juicio de síntesis que no se debe delegar.
+
+## Tabla de decisión: ¿paralelizar o secuencial?
+
+| Situación | Paralelizar | Secuencial | Por qué |
+|---|---|---|---|
+| Explorar 3+ módulos independientes del código | Sí | — | Solo lectura, sin contención de recursos |
+| Evaluar 3-5 alternativas de diseño | Sí | — | Cada evaluación debe ser independiente para no sesgarse |
+| Revisar calidad (seguridad, edge cases, tests, docs) | Sí | — | Lentes distintas sobre el mismo diff |
+| Correr la suite de tests completa | — | Sí | Proceso local pesado, satura RAM/CPU |
+| Levantar contenedores Docker / compose | — | Sí | Idem, más contención de puertos y volúmenes |
+| Codex CLI / Cursor CLI en modo headless | — | Sí (uno a la vez) | CLI externa con su propio consumo de RAM/CPU local |
+| Editar el mismo archivo desde 2+ subagentes | — | Sí (o worktrees separados) | Condición de carrera / corrupción de merge |
+| Fase de síntesis final del plan | — | Sí | Requiere juicio único, no fan-out |
+| Enviar N requests a una API externa con rate limit ajustado | — | Sí o con backoff | El paralelismo agrava el 429, no lo resuelve |
+
+## Errores comunes (esto no lo hagas)
+
+- **Confiar en el self-report del subagente sin reproducir.** Si dice "tests verdes", corre tú los tests.
+- **Lanzar subagentes que a su vez lanzan subagentes sin límite.** Reintroduce el problema peer-to-peer descontrolado.
+- **Paralelizar procesos locales pesados "porque la exploración fue rápida".** LLM y CPU/RAM local son categorías distintas; confundirlas es la causa más común de OOM en máquinas de 4-8 GB.
+- **Prompts sin criterio de terminación.** Sin él, un subagente sigue "explorando por si acaso" durante decenas de turnos, disparando el coste.
+- **No fijar `maxTurns`.** Es el freno de mano más simple para cortar a un subagente aunque no haya terminado.
+- **No fijar budget de coste por fase.** Un subagente en loop sin tope de turnos ni de gasto puede consumir en minutos lo que planeabas gastar en un día.
+- **Varios subagentes escribiendo sobre el mismo working directory de git a la vez.** Usa worktrees separados cuando la tarea modifica archivos.
+- **Delegar la revisión de seguridad al mismo subagente que implementó la feature.** Para auth/pagos/permisos, la revisión debe ser un subagente independiente que no vio el razonamiento de implementación.
+
+### Límites concretos que deberías fijar siempre
+
+- `maxTurns`: entre 5 y 15 para tareas de exploración/evaluación; más de 20 casi siempre es señal de un prompt mal acotado, no de una tarea genuinamente compleja.
+- `allowedTools` restringido: subagentes de exploración no deberían tener `Write`/`Edit`; subagentes de evaluación no deberían tener acceso a `Bash` si no necesitan ejecutar nada.
+- Budget por fase: define de antemano cuánto estás dispuesto a gastar en la fase de exploración vs. implementación vs. revisión, y corta si un subagente se sale del presupuesto sin resultado.
+- Concurrencia local: nunca más de 1 proceso pesado (test runner, Docker, CLI externa) corriendo a la vez en una máquina con RAM acotada, sin importar cuántos subagentes LLM tengas en paralelo.
+
+## Preguntas frecuentes
+
+### ¿Un subagente en Claude Code comparte memoria con el orquestador?
+
+No por defecto. El subagente arranca con el contexto que el orquestador le pasa explícitamente en el prompt de encargo, y devuelve solo su resultado final — no ve el resto de la conversación ni el resto de la sesión.
+
+### ¿Cuántos subagentes puedo lanzar en paralelo de forma segura?
+
+Depende del rate limit de tu cuenta de API y de si las tareas son solo LLM (lectura/razonamiento) o incluyen proceso local. Para tareas puramente LLM, 5-10 en paralelo suele ser razonable antes de tropezar con límites de tasa; para cualquier tarea que dispare procesos locales pesados, el límite práctico es 1 a la vez, sin importar cuántos "subagentes" definas.
+
+### ¿Los subagentes reemplazan al Claude Agent SDK o son lo mismo?
+
+Son complementarios. El tool `Agent`/`Task` de Claude Code es la forma interactiva de invocar subagentes dentro de una sesión de terminal. El Claude Agent SDK (TypeScript/Python) es la forma de construir el mismo patrón de orquestador → N subagentes como código de producción, fuera de una sesión interactiva — por ejemplo, en un cron o en un pipeline de CI.
+
+### ¿Qué pasa si un subagente se equivoca o alucina un resultado?
+
+Por eso existen los phase gates: el orquestador no avanza de fase confiando en el reporte del subagente, sino reproduciendo la verificación él mismo (correr el test, leer el archivo, comprobar el build). Si detectas la alucinación en el gate, el coste es una fase perdida, no todo el workflow.
+
+### ¿Necesito el Claude Agent SDK para usar subagentes o basta con Claude Code?
+
+Basta con Claude Code para uso interactivo diario. El SDK entra en juego cuando quieres el mismo patrón corriendo sin intervención humana — por ejemplo, integrado en un [Codex CLI o Cursor CLI headless](/blog/codex-cursor-cli-headless-ci-cron) dentro de tu CI o de un cron.
+
+### ¿Cómo estimo el coste antes de lanzar un fan-out grande?
+
+Multiplica el coste esperado de una llamada individual por el número de subagentes que planeas lanzar en esa fase, y compáralo contra tu budget de fase. Si el número te sorprende, es señal de que necesitas acotar el prompt (criterio de terminación, `maxTurns` más bajo) antes de lanzar, no después. Ver el desglose completo de costes reales en producción en [cuánto cuesta un sistema multi-agente](/blog/cuanto-cuesta-sistema-multi-agente).
+
+## Para seguir
+
+Si esto es tu primer contacto con arquitecturas de agentes, empieza por entender la capa que conecta a Claude con herramientas y datos externos en [¿Qué es MCP?](/blog/que-es-mcp-model-context-protocol) — los subagentes suelen tener acceso a un subconjunto distinto de servidores MCP que el orquestador, y esa configuración es la que determina qué puede y qué no puede hacer cada uno. Si tu caso de uso es correr este mismo patrón sin sesión interactiva, revisa [Codex CLI y Cursor CLI headless](/blog/codex-cursor-cli-headless-ci-cron) para automatizarlo en CI o cron. Y si lo que necesitas es justificar o controlar el gasto de un sistema con varios agentes en producción, la referencia de números reales está en [cuánto cuesta un sistema multi-agente](/blog/cuanto-cuesta-sistema-multi-agente).
