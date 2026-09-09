@@ -1,0 +1,28 @@
+---
+import type { GetStaticPaths, Page } from 'astro';
+import BlogIndex from '../../components/blog/BlogIndex.astro';
+import { PAGE_SIZE } from '../../lib/blog-constants';
+import { getPublishedPosts, type BlogEntry } from '../../lib/blog';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const posts = await getPublishedPosts('es');
+  const otherPages = Math.ceil((await getPublishedPosts('en')).length / PAGE_SIZE);
+  return paginate(posts, { pageSize: PAGE_SIZE })
+    .slice(1)
+    .map((route) => ({
+      ...route,
+      props: { ...route.props, hasAlternate: route.props.page.currentPage <= otherPages },
+    }));
+}) satisfies GetStaticPaths;
+
+const { page, hasAlternate } = Astro.props as { page: Page<BlogEntry>; hasAlternate: boolean };
+---
+
+<BlogIndex
+  lang="es"
+  posts={page.data}
+  totalPosts={page.total}
+  currentPage={page.currentPage}
+  lastPage={page.lastPage}
+  {hasAlternate}
+/>

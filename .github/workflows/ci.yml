@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    # Todos los PRs, incluidos los apilados sobre otra rama (p. ej. #5 sobre #4).
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
