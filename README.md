@@ -6,37 +6,66 @@ Portfolio bilingüe (ES/EN) de Jhonier Negrete. **Astro 5** estático, desplegad
 
 Todo el contenido vive en archivos de datos tipados. Edita, commitea y push a `main` — Vercel despliega solo.
 
-| Qué quieres cambiar | Archivo |
-|---|---|
-| Nombre, tagline, **disponibilidad**, email, links, bio, foto | `src/data/profile.ts` |
-| Proyectos (título, descripción, stack, links, año) | `src/data/projects.ts` |
-| Experiencia / timeline / educación / capability stack | `src/data/experience.ts` |
-| Servicios (oferta freelance) | `src/data/services.ts` |
-| Skills del marquee de la home | `src/data/skills.ts` |
-| Textos de interfaz (botones, labels, títulos de página) | `src/i18n/ui.ts` |
-| Rutas/slugs por idioma | `src/i18n/routes.ts` |
-| CV descargable | reemplaza `public/cv.pdf` |
+| Qué quieres cambiar                                          | Archivo                   |
+| ------------------------------------------------------------ | ------------------------- |
+| Nombre, tagline, **disponibilidad**, email, links, bio, foto | `src/data/profile.ts`     |
+| Proyectos (título, descripción, stack, links, año)           | `src/data/projects.ts`    |
+| Experiencia / timeline / educación / capability stack        | `src/data/experience.ts`  |
+| Servicios (oferta freelance)                                 | `src/data/services.ts`    |
+| Skills del marquee de la home                                | `src/data/skills.ts`      |
+| Textos de interfaz (botones, labels, títulos de página)      | `src/i18n/ui.ts`          |
+| Rutas/slugs por idioma                                       | `src/i18n/routes.ts`      |
+| CV descargable                                               | reemplaza `public/cv.pdf` |
 
 Cada texto visible tiene campos `es` y `en` juntos — edita ambos en el mismo objeto.
 
 ### Publicar un post del blog
 
-Crea `src/content/blog/mi-post.md` (uno por idioma):
+Crea `src/content/blog/mi-post.md` o `.mdx` directamente en esa carpeta (uno por idioma, sin subcarpetas para Markdown):
 
 ```markdown
 ---
-title: "Título del post"
+title: 'Título del post'
+description: 'Resumen descriptivo de entre 80 y 160 caracteres que aparecerá en listados, buscadores y tarjetas sociales.'
 date: 2026-08-01
-lang: es            # es | en
-tags: ["Agents", "Evals"]
-description: "Resumen corto que aparece en el listado."
-translationKey: mi-post   # opcional: enlaza la versión ES y EN
+updated: 2026-08-04 # opcional
+lang: es # es | en
+tags: [agentes, evaluacion-segura] # 1..6, kebab-case minúsculo, sin duplicados
+series: kernel-agents # opcional; debe existir en src/data/series.ts
+seriesOrder: 1 # obligatorio cuando hay series
+translationKey: mi-post # opcional: enlaza la versión ES y EN
+draft: false
+canonical: https://jnegrete.dev/blog/mi-post/ # opcional
+prerequisites: # obligatorio y con al menos un elemento cuando hay series
+  - Un entorno de pruebas
+limits: # obligatorio y con al menos un elemento cuando hay series
+  - No sustituye una auditoría formal
+nextStep:
+  label: 'Aplicar la guía'
+  href: '/blog/'
+# cover:                    # opcional; ruta relativa optimizada por Astro
+#   src: ./mi-post/cover.png
+#   alt: "Descripción no vacía de la portada"
 ---
 
 Contenido en Markdown…
 ```
 
-El listado, la página del post (`/blog/mi-post/`) y el feed RSS se generan solos. Sin posts, el blog muestra "próximamente".
+`title` no puede estar vacío y el slug del fichero debe usar minúsculas y guiones; un slug solo numérico está reservado para la paginación. Si usas `series`, declara también `seriesOrder`, `prerequisites` y `limits`, cada lista con al menos un elemento; los identificadores disponibles viven en `src/data/series.ts`. Las imágenes pueden vivir en `src/content/blog/mi-post/`, pero esa subcarpeta no puede contener `.md` ni `.mdx`.
+
+Cada serie se declara en `src/data/series.ts` con título y descripción en ambos idiomas. Puede incluir una guía base por idioma (`baseGuideSlug`) y piezas todavía no publicadas mediante objetos `planned: { es: [{ title, description?, scheduled? }], en: [...] }`; `scheduled`, cuando existe, usa `YYYY-MM-DD`. Esas piezas aparecen como “Próximamente” sin enlace. Los `tags` se convierten directamente en rutas de tema, por lo que deben usar letras minúsculas ASCII, dígitos y guiones, sin traducirlos silenciosamente al construir la URL.
+
+El listado paginado, la página del post (`/blog/mi-post/`), los hubs de serie y tema, su imagen `/og/mi-post.png`, el sitemap y el feed RSS se generan solos. En producción los posts con `draft: true` quedan fuera de páginas, índices, sitemap, RSS y OG. Para probar deliberadamente borradores en un build local:
+
+```bash
+BLOG_INCLUDE_DRAFTS=1 npm run build
+BLOG_INCLUDE_DRAFTS=1 npm run verify:blog
+```
+
+`BLOG_INCLUDE_DRAFTS` se lee exclusivamente del entorno del proceso que ejecuta cada comando. No lo configures en
+`.env`: Astro no carga ese archivo para este flag de build.
+
+Sin posts publicados, el blog muestra "próximamente".
 
 ## Desarrollo local
 

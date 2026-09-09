@@ -6,6 +6,7 @@ import Topbar from '../components/Topbar.astro';
 import Footer from '../components/Footer.astro';
 import type { Lang, PageKey } from '../i18n/routes';
 import { getUi } from '../i18n/ui';
+import type { ArticleMetadata, StructuredBlogPost } from '../lib/blog-metadata';
 
 export interface Props {
   lang: Lang;
@@ -22,16 +23,18 @@ export interface Props {
   translatedSlug?: string;
   /** Set true on the 404 page. */
   noindex?: boolean;
+  article?: ArticleMetadata;
+  post?: StructuredBlogPost;
 }
 
-const { lang, page, title, description, path, alternatePath, isBlogPost, translatedSlug, noindex } = Astro.props;
+const { lang, page, title, description, path, alternatePath, isBlogPost, translatedSlug, noindex, article, post } = Astro.props;
 const t = getUi(lang);
 ---
 
 <!doctype html>
 <html lang={lang}>
   <head>
-    <Head lang={lang} title={title} description={description} path={path} alternatePath={alternatePath} noindex={noindex} />
+    <Head lang={lang} title={title} description={description} path={path} alternatePath={alternatePath} noindex={noindex} article={article} post={post} />
   </head>
   <body>
     <a href="#main-content" class="skip-link">{t.skipToContent}</a>

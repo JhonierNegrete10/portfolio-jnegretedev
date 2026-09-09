@@ -1,0 +1,241 @@
+---
+import Base from '../../layouts/Base.astro';
+import SeriesCard from './SeriesCard.astro';
+import { getSeries } from '../../data/series';
+import { getUi } from '../../i18n/ui';
+import {
+  blogPagePath,
+  blogPostPath,
+  blogSeriesPath,
+  blogTopicPath,
+  otherLang,
+  rssPath,
+  type Lang,
+} from '../../i18n/routes';
+import { getSeriesWithPosts, readingMinutes, type BlogEntry } from '../../lib/blog';
+
+export interface Props {
+  lang: Lang;
+  posts: BlogEntry[];
+  totalPosts: number;
+  currentPage: number;
+  lastPage: number;
+  hasAlternate: boolean;
+}
+
+const { lang, posts, totalPosts, currentPage, lastPage, hasAlternate } = Astro.props;
+const t = getUi(lang);
+const path = blogPagePath(lang, currentPage);
+const seriesGroups = currentPage === 1 ? await getSeriesWithPosts(lang) : [];
+const count = `${String(totalPosts).padStart(3, '0')} ${t.blog.countSuffix}`;
+const iso = (value: Date) => value.toISOString().slice(0, 10);
+---
+
+<Base
+  lang={lang}
+  page="blog"
+  title={currentPage === 1 ? t.blog.title : `${t.blog.title} — ${currentPage}`}
+  description={t.meta.home.description}
+  path={path}
+  alternatePath={hasAlternate ? blogPagePath(otherLang(lang), currentPage) : undefined}
+>
+  <header class="blog-header">
+    <h1>{t.blog.title}<span>.</span></h1>
+    <p>{count}</p>
+  </header>
+
+  {
+    totalPosts === 0 ? (
+      <section class="empty">
+        <h2>{t.blog.comingSoonTitle}</h2>
+        <p>{t.blog.comingSoonBody}</p>
+      </section>
+    ) : (
+      <>
+        {seriesGroups.length > 0 && (
+          <section class="series" aria-label={t.blog.seriesSectionAria}>
+            {seriesGroups.map((group) => (
+              <SeriesCard lang={lang} {...group} />
+            ))}
+          </section>
+        )}
+        <section class="all-posts" aria-label={t.blog.chronologicalAria}>
+          <h2>{t.blog.allArticles}</h2>
+          <div class="flat-list">
+            {posts.map((post) => (
+              <article class="flat-row">
+                <a class="flat-title" href={blogPostPath(lang, post.id)}>
+                  {post.data.title}
+                </a>
+                <div class="flat-meta">
+                  {post.data.series && (
+                    <a class="flat-series" href={blogSeriesPath(lang, post.data.series)}>
+                      {getSeries(post.data.series).title[lang]}
+                    </a>
+                  )}
+                  {post.data.tags.map((tag) => (
+                    <a href={blogTopicPath(lang, tag)}>{tag}</a>
+                  ))}
+                  <span>
+                    {iso(post.data.date)} · {readingMinutes(post.body)} {t.blog.readMinutes}
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
+          {lastPage > 1 && (
+            <nav class="pagination" aria-label={t.blog.paginationAria}>
+              <span>
+                {currentPage} / {lastPage}
+              </span>
+              <div>
+                {currentPage > 1 && <a href={blogPagePath(lang, currentPage - 1)}>{t.blog.previousPage}</a>}
+                {currentPage < lastPage && <a href={blogPagePath(lang, currentPage + 1)}>{t.blog.nextPage}</a>}
+              </div>
+            </nav>
+          )}
+        </section>
+      </>
+    )
+  }
+  <div class="footer-bar"><a href={rssPath(lang)}>{t.blog.rss}</a></div>
+</Base>
+
+<style>
+  .blog-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 56px 24px 40px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .blog-header h1 {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 64px;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .blog-header h1 span,
+  .flat-meta a {
+    color: var(--color-accent);
+  }
+  .blog-header p,
+  .flat-meta,
+  .pagination {
+    color: var(--color-muted-dim);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .series {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+  .all-posts {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+  }
+  .series + .all-posts {
+    padding-top: 0;
+  }
+  .all-posts h2 {
+    margin: 0 0 16px;
+    font-family: var(--font-sans);
+    font-size: 18px;
+    text-transform: uppercase;
+  }
+  .flat-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-top: 0;
+    font-size: 12.5px;
+  }
+  .flat-row:first-child {
+    border-top: 1px solid var(--color-border);
+  }
+  .flat-title {
+    color: var(--color-text);
+  }
+  .flat-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    justify-content: flex-end;
+  }
+  .flat-meta > * + *::before {
+    margin-right: 10px;
+    color: var(--color-muted-dim);
+    content: '·';
+  }
+  .pagination {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 20px;
+  }
+  .pagination div {
+    display: flex;
+    gap: 12px;
+  }
+  .pagination a,
+  .footer-bar a {
+    display: inline-block;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text);
+  }
+  .empty {
+    padding: 64px 24px;
+    border-bottom: 1px solid var(--color-border);
+    text-align: center;
+  }
+  .empty h2 {
+    margin: 0 0 12px;
+    color: var(--color-accent);
+  }
+  .empty p {
+    max-width: 480px;
+    margin: 0 auto;
+    color: var(--color-muted-soft);
+    line-height: 1.8;
+  }
+  .footer-bar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 32px 24px;
+  }
+  @media (max-width: 1059px) {
+    .blog-header h1 {
+      font-size: 40px;
+    }
+    .flat-row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 6px;
+    }
+    .flat-meta {
+      justify-content: flex-start;
+    }
+  }
+  @media (max-width: 420px) {
+    .blog-header,
+    .series,
+    .all-posts {
+      padding-right: 16px;
+      padding-left: 16px;
+    }
+  }
+</style>

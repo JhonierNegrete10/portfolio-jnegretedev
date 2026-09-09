@@ -1,0 +1,17 @@
+---
+import SeriesHub from '../../../components/blog/SeriesHub.astro';
+import { getSeriesWithPosts, type SeriesWithPosts } from '../../../lib/blog';
+
+export async function getStaticPaths() {
+  const groups = await getSeriesWithPosts('es');
+  const otherIds = new Set((await getSeriesWithPosts('en')).map(({ id }) => id));
+  return groups.map((group) => ({
+    params: { serie: group.id },
+    props: { group, hasAlternate: otherIds.has(group.id) },
+  }));
+}
+
+const { group, hasAlternate } = Astro.props as { group: SeriesWithPosts; hasAlternate: boolean };
+---
+
+<SeriesHub lang="es" {group} {hasAlternate} />

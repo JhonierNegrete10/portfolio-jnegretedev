@@ -1,0 +1,23 @@
+<ol class="steps">
+  <slot />
+</ol>
+
+<style>
+  .steps {
+    margin: 28px 0;
+    padding-left: 2.5rem;
+    counter-reset: blog-step;
+  }
+
+  .steps :global(> li) {
+    position: relative;
+    margin: 0 0 18px;
+    padding-left: 8px;
+  }
+
+  .steps :global(> li::marker) {
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+    font-weight: 600;
+  }
+</style>

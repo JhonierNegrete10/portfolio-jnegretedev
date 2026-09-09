@@ -1,0 +1,19 @@
+---
+import TopicHub from '../../../components/blog/TopicHub.astro';
+import { getPostsByTag, getTagsWithCounts, type BlogEntry } from '../../../lib/blog';
+
+export async function getStaticPaths() {
+  const tags = await getTagsWithCounts('es');
+  const otherTags = new Set((await getTagsWithCounts('en')).map(({ tag }) => tag));
+  return Promise.all(
+    tags.map(async ({ tag }) => ({
+      params: { tag },
+      props: { tag, posts: await getPostsByTag(tag, 'es'), hasAlternate: otherTags.has(tag) },
+    })),
+  );
+}
+
+const { tag, posts, hasAlternate } = Astro.props as { tag: string; posts: BlogEntry[]; hasAlternate: boolean };
+---
+
+<TopicHub lang="es" {tag} {posts} {hasAlternate} />
