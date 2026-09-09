@@ -26,7 +26,7 @@ Si trabajas con Claude Code a diario, esto no es teoría de arquitectura de agen
 - Un repositorio real sobre el que practicar — no hace falta que sea grande, pero sí con al menos 2-3 módulos o carpetas distintas para que la exploración en paralelo tenga sentido.
 - Entender la diferencia entre **contexto** (lo que un modelo "ve" en su ventana) y **memoria persistente** (lo que guardas en disco entre sesiones). Los subagentes no comparten contexto entre sí por defecto.
 - Nociones de coste: saber leer una factura de la API de Anthropic o el contador de tokens de Claude Code (`/cost` o el resumen al cerrar sesión).
-- Opcional pero recomendado: haber leído sobre [MCP](/blog/que-es-mcp-model-context-protocol), porque los subagentes suelen tener acceso a un subconjunto distinto de herramientas/MCP que el orquestador.
+- Opcional pero recomendado: haber leído sobre MCP, porque los subagentes suelen tener acceso a un subconjunto distinto de herramientas/MCP que el orquestador.
 
 ## ¿Qué es un subagente y por qué existe?
 
@@ -265,12 +265,12 @@ Por eso existen los phase gates: el orquestador no avanza de fase confiando en e
 
 ### ¿Necesito el Claude Agent SDK para usar subagentes o basta con Claude Code?
 
-Basta con Claude Code para uso interactivo diario. El SDK entra en juego cuando quieres el mismo patrón corriendo sin intervención humana — por ejemplo, integrado en un [Codex CLI o Cursor CLI headless](/blog/codex-cursor-cli-headless-ci-cron) dentro de tu CI o de un cron.
+Basta con Claude Code para uso interactivo diario. El SDK entra en juego cuando quieres el mismo patrón corriendo sin intervención humana — por ejemplo, integrado en un Codex CLI o Cursor CLI headless dentro de tu CI o de un cron.
 
 ### ¿Cómo estimo el coste antes de lanzar un fan-out grande?
 
-Multiplica el coste esperado de una llamada individual por el número de subagentes que planeas lanzar en esa fase, y compáralo contra tu budget de fase. Si el número te sorprende, es señal de que necesitas acotar el prompt (criterio de terminación, `maxTurns` más bajo) antes de lanzar, no después. Ver el desglose completo de costes reales en producción en [cuánto cuesta un sistema multi-agente](/blog/cuanto-cuesta-sistema-multi-agente).
+Multiplica el coste esperado de una llamada individual por el número de subagentes que planeas lanzar en esa fase, y compáralo contra tu budget de fase. Si el número te sorprende, es señal de que necesitas acotar el prompt (criterio de terminación, `maxTurns` más bajo) antes de lanzar, no después. Ver el desglose completo de costes reales en producción en cuánto cuesta un sistema multi-agente.
 
 ## Para seguir
 
-Si esto es tu primer contacto con arquitecturas de agentes, empieza por entender la capa que conecta a Claude con herramientas y datos externos en [¿Qué es MCP?](/blog/que-es-mcp-model-context-protocol) — los subagentes suelen tener acceso a un subconjunto distinto de servidores MCP que el orquestador, y esa configuración es la que determina qué puede y qué no puede hacer cada uno. Si tu caso de uso es correr este mismo patrón sin sesión interactiva, revisa [Codex CLI y Cursor CLI headless](/blog/codex-cursor-cli-headless-ci-cron) para automatizarlo en CI o cron. Y si lo que necesitas es justificar o controlar el gasto de un sistema con varios agentes en producción, la referencia de números reales está en [cuánto cuesta un sistema multi-agente](/blog/cuanto-cuesta-sistema-multi-agente).
+Si esto es tu primer contacto con arquitecturas de agentes, empieza por entender la capa que conecta a Claude con herramientas y datos externos en ¿Qué es MCP? — los subagentes suelen tener acceso a un subconjunto distinto de servidores MCP que el orquestador, y esa configuración es la que determina qué puede y qué no puede hacer cada uno. Si tu caso de uso es correr este mismo patrón sin sesión interactiva, revisa Codex CLI y Cursor CLI headless para automatizarlo en CI o cron. Y si lo que necesitas es justificar o controlar el gasto de un sistema con varios agentes en producción, la referencia de números reales está en cuánto cuesta un sistema multi-agente.

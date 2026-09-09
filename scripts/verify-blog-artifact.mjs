@@ -155,6 +155,27 @@ function verifyPost({ url, htmlPath, data }) {
     }
   }
 
+  for (const tag of tags(html, 'a')) {
+    const href = tag.attrs.get('href');
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) continue;
+
+    try {
+      const resolvedUrl = new URL(href, siteOrigin);
+      if (resolvedUrl.origin !== siteOrigin) continue;
+
+      const localPath = sitePagePath(resolvedUrl.toString());
+      if (localPath && !existsSync(localPath)) {
+        fail(url, 'internal link target exists', `href ${href} is missing ${path.relative(projectRoot, localPath)}`);
+      }
+    } catch (error) {
+      fail(
+        url,
+        'internal link target exists',
+        `href ${href}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
   const breadcrumbNavs = tags(html, 'nav').filter(
     (tag) => tag.attrs.get('data-blog-block') === 'breadcrumbs' && tag.attrs.get('aria-label'),
   );
